@@ -1383,14 +1383,35 @@ function addPrevChatCard(text) {
   scrollToEnd();
 }
 
-// Seed the chat with a previous-history marker + one past Wiom bubble,
-// then wait for the user to tap the input field and send their intent.
+// Seed the chat with a previous-history marker + the past recharge conversation,
+// then wait for the user to tap the input field and send their new intent.
 async function runOutageFlow() {
-  // Past chat reference
-  addPrevChatCard('पुरानी चैट का इतिहास यहाँ रहेगा');
+  // Past chat reference marker
+  addPrevChatCard('पिछली चैट का इतिहास');
 
-  // One past Wiom bubble for visual depth
-  addWiomMessage('नमस्ते वर्मा जी 👋\n\nआपके नेट से जुड़ी कोई भी दिक्कत हो तो यहाँ बताइए — हम तुरंत देखेंगे।');
+  // 1) Wiom plan-offer with muted CTA (history)
+  const offerBubble = addWiomMessage(
+    '<b>रिचार्ज का सुझाव</b>\n\nबिना रुकावट नेट चलाने के लिए <b>1 दिन</b>, <b>2 दिन</b> या <b>7 दिन</b> का प्लान रिचार्ज कर सकते हैं।',
+    {
+      cta: [
+        { label: 'रिचार्ज करें', onClick: () => {} }
+      ]
+    }
+  );
+  offerBubble.querySelectorAll('.cta-link').forEach(el => el.classList.add('consumed'));
+
+  // 2) User's past reply, quoting the recharge suggestion
+  addUserMessage('✔️ हो गया', 'बिना रुकावट नेट चलाने के लिए 1 दिन, 2 दिन या 7 दिन का प्लान रिचार्ज कर सकते हैं');
+
+  // 3) Wiom recharge success — account details
+  addWiomMessage(
+    'बहुत बढ़िया! आपका <b>₹150</b> का रिचार्ज सफल हो गया है।\n\n<b>इस अकाउंट पर:</b>\nनेट का नाम: Wiom Ramesh 1234\nरजिस्टर्ड मोबाइल नंबर: 9876543210\n\nअब बिना रुकावट नेट चलाएं 👍'
+  );
+
+  // 4) Wiom follow-up — validity period
+  addWiomMessage(
+    'आपका <b>2 दिन</b> का रिचार्ज सफल रहा!\nआपका नेट <b>28 दिसंबर, 5:15 pm</b> तक बिना रुकावट के चालू रहेगा।\n\nमन भर कर इस्तेमाल करें और उसके बाद अपनी ज़रूरत के हिसाब से रिचार्ज करें।'
+  );
 
   log('entry', 'awaiting user typed intent', false);
   // Flow continues via openKeyboard → sendIntent (see below)
