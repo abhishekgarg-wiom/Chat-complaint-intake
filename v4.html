@@ -1566,7 +1566,7 @@ async function onIntentSent() {
 
   await wait(1000);
   await showTyping(1000);
-  addWiomMessage('हमारे end पर सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?', {
+  addWiomMessage('हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?', {
     cta: [
       { label: 'नेट नहीं चल रहा',           onClick: () => onPickIssue('not_working',  'नेट नहीं चल रहा') },
       { label: 'नेट रुक रुक कर चल रहा है', onClick: () => onPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
@@ -1575,7 +1575,7 @@ async function onIntentSent() {
   log('ASK_ISSUE', 'awaiting 2-option pick', false);
 }
 
-// Issue picked → INSTANT complaint registration + parallel self-help + auto progress
+// Issue picked → Step 2 (troubleshoot) → Step 3 (instant registration) → Step 4 (ownership+ETA) → Step 5 (auto progress)
 async function onPickIssue(key, label) {
   addUserMessage(label, 'दिक्कत क्या है?');
   log('ASK_ISSUE', `→ ${label}`, false);
@@ -1583,7 +1583,19 @@ async function onPickIssue(key, label) {
   await wait(700);
   await showTyping(1300);
 
-  // ----- INSTANT REGISTRATION -----
+  // ----- Step 2 · Quick troubleshoot (parallel self-help) -----
+  addWiomMessage(
+    'समझ गए। पहले ये जल्दी से देख लें — कई बार इन्हीं से नेट चल जाता है:\n\n' +
+    '<b>1.</b> देखें कि आप सही Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं\n' +
+    '<b>2.</b> नेट बॉक्स बंद-चालू करें — तार निकालें, <b>30 सेकंड</b> रुकें, वापस लगाएं\n' +
+    '<b>3.</b> लाइटें स्थिर हों, तो मोबाइल को दोबारा कनेक्ट करें',
+    { media: true }
+  );
+
+  await wait(1400);
+  await showTyping(1300);
+
+  // ----- Step 3 · Instant complaint registration + Step 4 · Ownership/ETA -----
   const ticketId = String(Math.floor(600000 + Math.random() * 99999));
   activeComplaint = {
     id: ticketId,
@@ -1597,28 +1609,16 @@ async function onPickIssue(key, label) {
   showTicketLine(activeComplaint.team, activeComplaint.eta);
 
   addWiomMessage(
-    `<b>हो गया — आपकी शिकायत दर्ज है।</b> 🙏\n\n` +
+    `<b>साथ ही — आपकी शिकायत दर्ज भी कर दी है।</b> 🙏\n\n` +
     `<b>टिकट:</b> #${ticketId}\n` +
     `<b>समस्या:</b> ${label}\n` +
     `<b>टीम:</b> रमेश नेटवर्क टीम\n` +
     `<b>ETA:</b> 25 मिनट\n\n` +
-    `आपको दोबारा बताने की ज़रूरत नहीं पड़ेगी — हम update करते रहेंगे।`
+    `आपको दोबारा बताने की ज़रूरत नहीं पड़ेगी — हमारी टीम पहले से ही लग गई है।`
   );
   log('TICKET', `instant #${ticketId} — ${PROBLEM_META[key]}`, true);
 
-  await wait(1100);
-  await showTyping(1100);
-
-  // Self-help reframed: supportive, parallel to team work
-  addWiomMessage(
-    'जब तक टीम पहुँचे, आप ये कोशिश कर सकते हैं — कई बार इन्हीं से नेट चल जाता है:\n\n' +
-    '<b>1.</b> देखें कि आप सही Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं\n' +
-    '<b>2.</b> नेट बॉक्स बंद-चालू करें — तार निकालें, <b>30 सेकंड</b> रुकें, वापस लगाएं\n' +
-    '<b>3.</b> लाइटें स्थिर हों, तो मोबाइल को दोबारा कनेक्ट करें',
-    { media: true }
-  );
-
-  // Auto-advance progress chain
+  // Auto-advance to Step 5 · Live progress
   setTimeout(() => progressChain(), 2200);
 }
 
@@ -1759,7 +1759,7 @@ async function onFinalConfirm(isResolved) {
   await wait(700);
   await showTyping(1200);
   addWiomMessage(
-    `माफ़ी चाहते हैं। अब एक <b>senior इंजीनियर</b> आपसे personally बात करेंगे — कुछ ही मिनटों में call आएगा।\n\n` +
+    `माफ़ी चाहते हैं। अब एक <b>बड़े इंजीनियर</b> आपसे खुद बात करेंगे — कुछ ही मिनटों में फ़ोन आएगा।\n\n` +
     `टिकट #${activeComplaint.id} खुला है, हम लगे हैं।`
   );
   log('ESCALATED', `${activeComplaint.id} → senior`, false);
@@ -1786,7 +1786,7 @@ async function runContinuityFlow() {
 
   // Skip the typing-input layer — user doesn't need to repeat themselves
   intentSent = true;
-  inputField.innerHTML = 'चैट active है — कुछ और हो तो यहाँ बताएं';
+  inputField.innerHTML = 'कुछ और कहना हो तो यहाँ बताएं';
   inputField.classList.remove('typed');
   inputField.classList.add('placeholder');
 
@@ -1794,12 +1794,12 @@ async function runContinuityFlow() {
 
   // Active-complaint summary upfront — proof of "no repeat"
   addWiomMessage(
-    `<b>आपकी शिकायत अभी भी active है।</b> ✊\n\n` +
+    `<b>आपकी पिछली शिकायत अभी भी चालू है।</b>\n\n` +
     `<b>टिकट:</b> #${activeComplaint.id}\n` +
     `<b>समस्या:</b> ${activeComplaint.problem}\n` +
     `<b>टीम:</b> ${activeComplaint.team}\n` +
     `<b>स्थिति:</b> ${activeComplaint.status}\n\n` +
-    `आपको कुछ करने की ज़रूरत नहीं — हम update करते रहेंगे।`
+    `आपको कुछ और करने की ज़रूरत नहीं — हम update करते रहेंगे।`
   );
   log('CONTINUITY', `resumed #${activeComplaint.id}`, false);
 
