@@ -240,6 +240,19 @@ body {
 .active-net-card .home-icon .material-icons { font-size: 24px; }
 .active-net-card .label { font-size: 12px; color: var(--sec-text); line-height: 16px; }
 .active-net-card .status { font-size: 16px; font-weight: 600; color: var(--pri-text); line-height: 24px; }
+.active-net-card .net-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.active-net-card .ticket-line {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--pri-text);
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--stroke);
+}
+.active-net-card .ticket-line.hidden { display: none; }
+.active-net-card .ticket-line .label { font-size: 11px; line-height: 14px; }
+.active-net-card .ticket-line .dot-sep { color: var(--hint-text); margin: 0 2px; }
+.active-net-card .ticket-line span:not(.label):not(.dot-sep) { font-weight: 600; }
 
 .messages {
   flex: 1;
@@ -998,7 +1011,7 @@ body {
   <span class="title">Complaint Intake — Chat Prototype (v4)</span>
   <div class="scenarios">
     <span class="scenarios-label">Scenario</span>
-    <button class="scenario-pill active" data-scenario="resolution" onclick="setScenario('resolution')">मेरा नेट नहीं चल रहा</button>
+    <button class="scenario-pill active" data-scenario="fresh" onclick="setScenario('fresh')">मेरा नेट नहीं चल रहा</button>
   </div>
   <button onclick="restart()"><span class="material-icons" style="font-size:14px">refresh</span> Restart</button>
 </div>
@@ -1047,13 +1060,19 @@ body {
   <!-- ============ SCENARIO CHOOSER ============ -->
   <section class="yellow-screen queued" id="scenarioScreen">
     <div class="scenario-content">
-      <div class="scenario-title">v4 — Resolution flow</div>
-      <div class="scenario-subtitle">तीन fixes लागू हैं — system status check, recheck gate, post-ticket engineer chain।</div>
+      <div class="scenario-title">v4 — Resolution journey</div>
+      <div class="scenario-subtitle">complaint <b>intake</b> नहीं — <b>resolution</b> तक चैट साथ चलती है।</div>
 
-      <div class="scenario-card" id="scenario1Card" data-case="resolution">
-        <div class="scenario-card-num">Case · Full resolution</div>
-        <div class="scenario-card-title">"मेरा नेट नहीं चल रहा"</div>
-        <div class="scenario-card-desc">रिचार्ज contradiction acknowledge → system status check (recharge/Wi-Fi/server) → 2-option pick → troubleshoot steps → <b>"क्या अब नेट सही चल रहा है?"</b> recheck gate → हाँ पर close · नहीं पर ticket → engineer assignment card → resolution check। User का objective "नेट चलना" तक चैट साथ रहती है।</div>
+      <div class="scenario-card" id="scenario1Card" data-case="fresh">
+        <div class="scenario-card-num">Case 1 · नई शिकायत</div>
+        <div class="scenario-card-title">पहली बार चैट खोली है</div>
+        <div class="scenario-card-desc">User types "मेरा नेट नहीं चल रहा" → system status check → issue pick → <b>शिकायत तुरंत दर्ज</b> + ETA + supportive self-help → team assigned (engineer card) → live progress → delay recovery → resolution confirm (हाँ / अभी भी नहीं)। Reopen handled भी है।</div>
+      </div>
+
+      <div class="scenario-card" id="scenario2Card" data-case="continuity">
+        <div class="scenario-card-num">Case 2 · वापस आए हैं</div>
+        <div class="scenario-card-title">पहले से active शिकायत है</div>
+        <div class="scenario-card-desc">User चैट दोबारा खोलते हैं — कोई फिर से नहीं पूछता। Active complaint summary upfront, live status sticky-bar, और auto-progress बीच से उठाता है। *आपको दोबारा बताने की ज़रूरत नहीं* का proof।</div>
       </div>
     </div>
     <div class="context-cta-wrap"></div>
@@ -1103,9 +1122,14 @@ body {
           </defs>
         </svg>
       </div>
-      <div>
+      <div class="net-meta">
         <div class="label">घर का नेट: रमेश</div>
         <div><span class="label">स्थिति: </span><span class="status" id="netStatus">चालू है</span></div>
+        <div class="ticket-line hidden" id="ticketLine">
+          <span class="label">टीम: </span><span id="teamName">—</span>
+          <span class="dot-sep">·</span>
+          <span class="label">ETA: </span><span id="ticketEta">—</span>
+        </div>
       </div>
     </div>
   </div>
@@ -1427,11 +1451,25 @@ function addUserMessage(text, replyPreviewText = null) {
   scrollToEnd();
 }
 
-// ============ FLOW ENGINE (v4 — with 3 fixes) ============
+// ============ FLOW ENGINE (v4 — full resolution journey) ============
 
 const INTENT_TEXT = 'मेरा नेट नहीं चल रहा';
 const netStatusEl = document.getElementById('netStatus');
+const ticketLineEl = document.getElementById('ticketLine');
+const teamNameEl = document.getElementById('teamName');
+const ticketEtaEl = document.getElementById('ticketEta');
+
 function setNetStatus(text) { if (netStatusEl) netStatusEl.textContent = text; }
+function showTicketLine(team, eta) {
+  if (!ticketLineEl) return;
+  teamNameEl.textContent = team;
+  ticketEtaEl.textContent = eta;
+  ticketLineEl.classList.remove('hidden');
+}
+function hideTicketLine() { if (ticketLineEl) ticketLineEl.classList.add('hidden'); }
+
+// Active complaint state — persists across "restart" within a session
+let activeComplaint = null;
 
 function addPrevChatCard(text) {
   const card = document.createElement('div');
@@ -1443,7 +1481,6 @@ function addPrevChatCard(text) {
   scrollToEnd();
 }
 
-// Engineer card (post-ticket continuity)
 function addEngineerCard({name, role}) {
   const card = document.createElement('div');
   card.className = 'engineer-card';
@@ -1456,11 +1493,9 @@ function addEngineerCard({name, role}) {
     <div class="call-btn" title="Call ${name}"><span class="material-icons">call</span></div>`;
   messages.appendChild(card);
   scrollToEnd();
-  // The card breaks the "wiom run" — next wiom message gets a fresh notch
   lastSender = null;
 }
 
-// Status-check rows with mixed ✓ / ✗
 function addStatusCheckMixed(items) {
   const wrap = document.createElement('div');
   wrap.className = 'bubble-wrap wiom bubble-enter';
@@ -1474,16 +1509,21 @@ function addStatusCheckMixed(items) {
     const mark = it.ok ? '✓' : '!';
     return `<div class="status-check-row"><span class="check-badge ${cls}">${mark}</span><span>${it.text}</span></div>`;
   }).join('');
-  bubble.innerHTML = `<div class="content">${rows}</div>` +
-    `<div class="timestamp">10:15 AM</div>`;
+  bubble.innerHTML = `<div class="content">${rows}</div><div class="timestamp">10:15 AM</div>`;
   wrap.appendChild(bubble);
   messages.appendChild(wrap);
   scrollToEnd();
 }
 
-// -------- Seed: prev-chat history (same as v3) --------
-async function runOutageFlow() {
+// ============================================================================
+// CASE 1 — Fresh complaint
+// ============================================================================
+async function runFreshFlow() {
+  activeComplaint = null;
   setNetStatus('चालू है');
+  hideTicketLine();
+
+  // Seed prev-chat history (recharge)
   addPrevChatCard('पिछली चैट का इतिहास');
 
   const offerBubble = addWiomMessage(
@@ -1499,41 +1539,34 @@ async function runOutageFlow() {
   );
 
   addWiomMessage(
-    'आपका <b>2 दिन</b> का रिचार्ज सफल रहा!\nआपका नेट <b>28 दिसंबर, 5:15 pm</b> तक बिना रुकावट के चालू रहेगा।\n\nमन भर कर इस्तेमाल करें और उसके बाद अपनी ज़रूरत के हिसाब से रिचार्ज करें।'
+    'आपका <b>2 दिन</b> का रिचार्ज सफल रहा!\nआपका नेट <b>28 दिसंबर, 5:15 pm</b> तक बिना रुकावट के चालू रहेगा।'
   );
 
-  log('entry', 'awaiting user typed intent', false);
+  log('entry', 'fresh — awaiting user intent', false);
 }
 
-// -------- Step 1: user sends intent → contradiction ack + status check --------
+// User sends typed intent → contradiction ack → status check → issue pick
 async function onIntentSent() {
   addUserMessage(INTENT_TEXT);
-  log('entry', 'seekHelp intent sent', false);
+  log('entry', 'intent sent', false);
   setNetStatus('जाँच रहे हैं…');
 
   await wait(700);
   await showTyping(1200);
-
-  // FIX 1a — acknowledge contradiction (recharge is active but user reports downtime)
-  addWiomMessage(
-    'अरे, आपका रिचार्ज तो <b>28 दिसंबर तक चालू</b> है — फिर भी दिक्कत आ रही है? चलिए तुरंत जाँचते हैं।'
-  );
+  addWiomMessage('अरे, आपका रिचार्ज तो <b>28 दिसंबर तक चालू</b> है — फिर भी दिक्कत? चलिए तुरंत देखते हैं।');
 
   await wait(800);
-  await showTyping(1400);
-
-  // FIX 1b — system status check (rules in/out account-side issues for the user)
+  await showTyping(1300);
   addStatusCheckMixed([
     { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
     { ok: true, text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' },
     { ok: true, text: 'हमारे सर्वर तक connection ठीक है' }
   ]);
-  log('STATUS_CHECK', 'recharge ✓ wifi ✓ server ✓', true);
+  log('STATUS_CHECK', 'all ✓', true);
 
-  await wait(1100);
+  await wait(1000);
   await showTyping(1000);
-
-  addWiomMessage('हमारे end पर सब सही दिख रहा है — तो दिक्कत आपके मोबाइल फ़ोन या नेट बॉक्स के आसपास हो सकती है।\n\nये बताइए — आपकी समस्या क्या है?', {
+  addWiomMessage('हमारे end पर सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?', {
     cta: [
       { label: 'नेट नहीं चल रहा',           onClick: () => onPickIssue('not_working',  'नेट नहीं चल रहा') },
       { label: 'नेट रुक रुक कर चल रहा है', onClick: () => onPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
@@ -1542,158 +1575,267 @@ async function onIntentSent() {
   log('ASK_ISSUE', 'awaiting 2-option pick', false);
 }
 
-// -------- Step 2: user picks issue → instructions + "हो गया, चेक करें" CTA --------
+// Issue picked → INSTANT complaint registration + parallel self-help + auto progress
 async function onPickIssue(key, label) {
-  addUserMessage(label, 'आपकी समस्या क्या है?');
-  log('ASK_ISSUE', `→ "${label}"`, false);
+  addUserMessage(label, 'दिक्कत क्या है?');
+  log('ASK_ISSUE', `→ ${label}`, false);
 
   await wait(700);
-  await showTyping(1400);
+  await showTyping(1300);
+
+  // ----- INSTANT REGISTRATION -----
+  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
+  activeComplaint = {
+    id: ticketId,
+    problem: label,
+    team: 'रमेश नेटवर्क टीम',
+    eta: '25 मिनट',
+    status: 'शिकायत दर्ज हो गई',
+    stage: 'registered'
+  };
+  setNetStatus('शिकायत दर्ज हो गई');
+  showTicketLine(activeComplaint.team, activeComplaint.eta);
 
   addWiomMessage(
-    'समस्या समझ गए। एक बार ये करके देखें — अक्सर इन्हीं से नेट वापस आ जाता है:\n\n' +
-    '<b>1.</b> चेक करें कि आप सही <b>नेट सिग्नल</b> (Wiom Ramesh 1234) से जुड़े हैं\n' +
-    '<b>2.</b> अपने <b>नेट बॉक्स</b> को रीस्टार्ट करें — तार निकालें, <b>30 सेकंड</b> रुकें, तार वापस लगाएं\n' +
-    '<b>3.</b> नेट बॉक्स की लाइटें स्थिर होने पर, अपने <b>मोबाइल फ़ोन</b> को नेट से <b>दोबारा कनेक्ट</b> करें\n\n' +
-    'सब करने के बाद नीचे का बटन दबाएं।',
-    {
-      media: true,
-      cta: [
-        { label: 'हो गया, अब चेक करते हैं', onClick: () => onStepsDone(key, label) }
-      ]
-    }
+    `<b>हो गया — आपकी शिकायत दर्ज है।</b> 🙏\n\n` +
+    `<b>टिकट:</b> #${ticketId}\n` +
+    `<b>समस्या:</b> ${label}\n` +
+    `<b>टीम:</b> रमेश नेटवर्क टीम\n` +
+    `<b>ETA:</b> 25 मिनट\n\n` +
+    `आपको दोबारा बताने की ज़रूरत नहीं पड़ेगी — हम update करते रहेंगे।`
   );
-  log('INSTRUCTIONS', 'awaiting steps-done tap', false);
-}
+  log('TICKET', `instant #${ticketId} — ${PROBLEM_META[key]}`, true);
 
-// -------- FIX 2: recheck gate — "क्या अब नेट सही चल रहा है?" --------
-async function onStepsDone(key, label) {
-  addUserMessage('हो गया, अब चेक करते हैं', 'सब करने के बाद नीचे का बटन दबाएं।');
-  log('STEPS_DONE', 'user reports steps done', false);
-
-  await wait(700);
+  await wait(1100);
   await showTyping(1100);
 
-  addWiomWithSideBySide('क्या अब आपका नेट सही चल रहा है?', [
-    { label: 'हाँ',  onClick: () => onRecheck(true,  key, label) },
-    { label: 'नहीं', onClick: () => onRecheck(false, key, label) }
-  ]);
-  log('RECHECK', 'awaiting हाँ/नहीं', false);
+  // Self-help reframed: supportive, parallel to team work
+  addWiomMessage(
+    'जब तक टीम पहुँचे, आप ये कोशिश कर सकते हैं — कई बार इन्हीं से नेट चल जाता है:\n\n' +
+    '<b>1.</b> देखें कि आप सही Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं\n' +
+    '<b>2.</b> नेट बॉक्स बंद-चालू करें — तार निकालें, <b>30 सेकंड</b> रुकें, वापस लगाएं\n' +
+    '<b>3.</b> लाइटें स्थिर हों, तो मोबाइल को दोबारा कनेक्ट करें',
+    { media: true }
+  );
+
+  // Auto-advance progress chain
+  setTimeout(() => progressChain(), 2200);
 }
 
-async function onRecheck(isYes, key, label) {
-  if (isYes) {
-    addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
-    log('RECHECK', '→ self-resolved', false);
+// Live progress + delay recovery + work-done + resolution check
+async function progressChain() {
+  // Stage: team assigned
+  activeComplaint.stage = 'team_assigned';
+  setNetStatus('टीम काम कर रही है');
+  showTicketLine(activeComplaint.team, '20 मिनट');
+
+  await showTyping(1200);
+  addWiomMessage('<b>रमेश नेटवर्क टीम</b> को आपका टिकट दे दिया गया है।');
+  await wait(400);
+  addEngineerCard({ name: 'रमेश नेटवर्क टीम', role: 'आपके इलाके के नेट इंजीनियर' });
+  log('PROGRESS', 'team assigned', true);
+
+  // Stage: on-site
+  await wait(2100);
+  activeComplaint.stage = 'on_site';
+  showTicketLine(activeComplaint.team, '15 मिनट');
+  await showTyping(1100);
+  addWiomMessage('टीम ने आपके इलाके में देखना शुरू कर दिया है।');
+  log('PROGRESS', 'on-site', true);
+
+  // Stage: investigating
+  await wait(2200);
+  activeComplaint.stage = 'investigating';
+  showTicketLine(activeComplaint.team, '10 मिनट');
+  await showTyping(1200);
+  addWiomMessage('लाइन में एक छोटी दिक्कत मिली है — अभी ठीक कर रहे हैं।');
+  log('PROGRESS', 'investigating', true);
+
+  // Stage: DELAY RECOVERY (demonstrated for prototype)
+  await wait(2400);
+  activeComplaint.stage = 'delayed';
+  setNetStatus('priority पर ले लिया है');
+  showTicketLine(activeComplaint.team, '+5 मिनट');
+  await showTyping(1200);
+  addWiomMessage(
+    'देरी के लिए माफ़ कीजिए — काम थोड़ा बड़ा निकला। हमने इसे <b>priority</b> पर भेज दिया है, बस थोड़ी ही देर और।'
+  );
+  log('PROGRESS', 'delay recovery shown', true);
+
+  // Stage: work done
+  await wait(2300);
+  activeComplaint.stage = 'work_done';
+  setNetStatus('समाधान confirm होना बाकी');
+  showTicketLine(activeComplaint.team, 'काम पूरा');
+  await showTyping(1200);
+  addWiomMessage('टीम का काम पूरा हो गया है। एक बार चेक कर के बताइए —');
+  log('PROGRESS', 'work done', true);
+
+  // Resolution check
+  await wait(500);
+  addWiomWithSideBySide('नेट अब ठीक चल रहा है?', [
+    { label: 'हाँ ठीक है',   onClick: () => onResolutionConfirm(true) },
+    { label: 'अभी भी नहीं',  onClick: () => onResolutionConfirm(false) }
+  ]);
+  log('RESOLUTION_CHECK', 'awaiting हाँ/नहीं', false);
+}
+
+async function onResolutionConfirm(isResolved) {
+  if (isResolved) {
+    addUserMessage('हाँ ठीक है', 'नेट अब ठीक चल रहा है?');
+    activeComplaint.stage = 'resolved';
     setNetStatus('चालू है');
+    hideTicketLine();
 
     await wait(700);
     await showTyping(900);
-    addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं — हम तुरंत मदद करेंगे।');
-    log('COMPLETED', 'flow ended (self-resolved, NO ticket)', false);
+    addWiomMessage(
+      `<b>समाधान हो गया।</b> 🎉\n\n` +
+      `टिकट #${activeComplaint.id} बंद कर दिया गया है।\n\n` +
+      `आगे कोई भी दिक्कत हो — यहीं बताइए, हम तुरंत देखेंगे।`
+    );
+    log('COMPLETED', `${activeComplaint.id} → resolved + closed`, false);
 
+    activeComplaint = null;
     await wait(600);
     addRestartCard();
     return;
   }
 
-  addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
-  log('RECHECK', '→ unresolved, proceed to ticket', false);
+  // Not resolved → reopen + senior intervention
+  addUserMessage('अभी भी नहीं', 'नेट अब ठीक चल रहा है?');
+  activeComplaint.stage = 'reopened';
+  setNetStatus('दोबारा देख रहे हैं');
+  showTicketLine(activeComplaint.team, '10 मिनट');
 
   await wait(700);
-  await showTyping(1200);
-
-  addWiomMessage(
-    'ठीक है — अब हम partner team को भेजते हैं। एक tap में टिकट बन जाएगा।\n\n<b>SLA:</b> 4 घंटे के अंदर समाधान।',
-    {
-      cta: [
-        { label: 'शिकायत दर्ज करें', onClick: () => onRaiseComplaint(key, label) }
-      ]
-    }
-  );
-  log('TICKET_OFFER', 'awaiting raise-complaint tap', false);
-}
-
-// -------- Step 3: create ticket → engineer assignment → resolution check (FIX 3) --------
-async function onRaiseComplaint(key, label) {
-  addUserMessage('शिकायत दर्ज करें', 'एक tap में टिकट बन जाएगा।');
-  log('RAISE_COMPLAINT', `→ ${label}`, false);
-
-  await wait(700);
-  await showTyping(1400);
-
-  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
-  setNetStatus(`जाँच चल रही है · #${ticketId}`);
-
-  addWiomMessage(
-    `<b>टिकट दर्ज हो गया।</b>\n\n<b>समस्या:</b> ${label}\n<b>टिकट ID:</b> ${ticketId}\n<b>SLA:</b> 4 घंटे के अंदर समाधान`
-  );
-  log('TICKET', `${ticketId} — ${PROBLEM_META[key]}`, true);
-
-  // ---- Engineer assignment (auto-advances) ----
-  await wait(1500);
-  await showTyping(1200);
-  addWiomMessage('आपके इलाके के <b>नेट इंजीनियर</b> तय हो गए हैं।');
-  await wait(400);
-  addEngineerCard({ name: 'रोहित कुमार', role: 'नेट इंजीनियर · आपका इलाका' });
-  log('ENGINEER_ASSIGNED', 'रोहित कुमार', true);
-  setNetStatus(`इंजीनियर तय हो गया · #${ticketId}`);
-
-  await wait(1600);
   await showTyping(1100);
-  addWiomMessage('रोहित जी आपके इलाके में काम शुरू कर चुके हैं। <b>शाम 6 बजे तक</b> समाधान हो जाएगा।\n\nजैसे ही नेट वापस आए, यहीं चैट में बताइए।');
-  log('ENGINEER_WORKING', 'in-progress', true);
+  addWiomMessage(
+    'माफ़ कीजिए — टीम को वापस भेज रहे हैं। पहले से ज़्यादा ध्यान देंगे। <b>10 मिनट</b> में update देंगे।'
+  );
+  log('REOPENED', `${activeComplaint.id} → back to team`, false);
 
-  // ---- Resolution check (closes the loop on user's *actual* objective) ----
   await wait(2200);
-  await showTyping(1400);
-  addWiomMessage('एक update — रोहित जी ने अपना काम पूरा कर लिया है।');
-  setNetStatus('समाधान confirm होना बाकी');
+  showTicketLine(activeComplaint.team, '5 मिनट');
+  await showTyping(1200);
+  addWiomMessage('रमेश जी फिर से देख रहे हैं — बस थोड़ी ही देर।');
 
-  await wait(700);
-  await showTyping(1000);
-  addWiomWithSideBySide('क्या अब आपका नेट सही चल रहा है?', [
-    { label: 'हाँ, चल रहा है',     onClick: () => onResolutionConfirm(true,  ticketId) },
-    { label: 'नहीं, अभी भी दिक्कत', onClick: () => onResolutionConfirm(false, ticketId) }
+  await wait(2300);
+  setNetStatus('समाधान confirm होना बाकी');
+  showTicketLine(activeComplaint.team, 'काम पूरा');
+  await showTyping(1200);
+  addWiomMessage('अब काम पूरा हो गया है। एक बार और देख लीजिए।');
+
+  await wait(500);
+  addWiomWithSideBySide('अब नेट चल रहा है?', [
+    { label: 'हाँ चल रहा है', onClick: () => onFinalConfirm(true) },
+    { label: 'अभी भी नहीं',    onClick: () => onFinalConfirm(false) }
   ]);
-  log('RESOLUTION_CHECK', 'awaiting final हाँ/नहीं', false);
+  log('RESOLUTION_CHECK_2', 'awaiting final हाँ/नहीं', false);
 }
 
-async function onResolutionConfirm(isResolved, ticketId) {
+async function onFinalConfirm(isResolved) {
   if (isResolved) {
-    addUserMessage('हाँ, चल रहा है', 'क्या अब आपका नेट सही चल रहा है?');
-    log('RESOLUTION', `${ticketId} → resolved`, false);
+    addUserMessage('हाँ चल रहा है', 'अब नेट चल रहा है?');
     setNetStatus('चालू है');
+    hideTicketLine();
 
     await wait(700);
     await showTyping(800);
-    addWiomMessage(`<b>टिकट #${ticketId} बंद कर दिया गया।</b>\n\nध्यान देने के लिए धन्यवाद। 🙏\n\nआगे कोई दिक्कत हो तो यहीं बताएं।`);
-    log('COMPLETED', 'ticket resolved + closed', false);
+    addWiomMessage(
+      `<b>समाधान हो गया।</b> 🙏\n\n` +
+      `टिकट #${activeComplaint.id} बंद। ध्यान देने के लिए धन्यवाद।`
+    );
+    log('COMPLETED', `${activeComplaint.id} → resolved (final)`, false);
+    activeComplaint = null;
 
     await wait(600);
     addRestartCard();
     return;
   }
 
-  addUserMessage('नहीं, अभी भी दिक्कत', 'क्या अब आपका नेट सही चल रहा है?');
-  log('RESOLUTION', `${ticketId} → reopened`, false);
-  setNetStatus(`दोबारा जाँच · #${ticketId}`);
-
+  addUserMessage('अभी भी नहीं', 'अब नेट चल रहा है?');
+  setNetStatus('senior team देख रही है');
   await wait(700);
-  await showTyping(1100);
-  addWiomMessage(`<b>टिकट #${ticketId} फिर से खोल दिया गया है।</b>\n\nरोहित जी को वापस भेज रहे हैं — वे फिर से देखेंगे। अगले update का इंतज़ार करें।`);
-  log('COMPLETED', 'ticket reopened', false);
+  await showTyping(1200);
+  addWiomMessage(
+    `माफ़ी चाहते हैं। अब एक <b>senior इंजीनियर</b> आपसे personally बात करेंगे — कुछ ही मिनटों में call आएगा।\n\n` +
+    `टिकट #${activeComplaint.id} खुला है, हम लगे हैं।`
+  );
+  log('ESCALATED', `${activeComplaint.id} → senior`, false);
 
   await wait(600);
   addRestartCard();
 }
 
+// ============================================================================
+// CASE 2 — Continuity (returning with an active complaint)
+// ============================================================================
+async function runContinuityFlow() {
+  // Synthesize an in-progress complaint (the user already raised it earlier)
+  activeComplaint = {
+    id: '612345',
+    problem: 'नेट नहीं चल रहा',
+    team: 'रमेश नेटवर्क टीम',
+    eta: '12 मिनट',
+    status: 'टीम काम कर रही है',
+    stage: 'in_progress'
+  };
+  setNetStatus(activeComplaint.status);
+  showTicketLine(activeComplaint.team, activeComplaint.eta);
+
+  // Skip the typing-input layer — user doesn't need to repeat themselves
+  intentSent = true;
+  inputField.innerHTML = 'चैट active है — कुछ और हो तो यहाँ बताएं';
+  inputField.classList.remove('typed');
+  inputField.classList.add('placeholder');
+
+  addPrevChatCard('आप थोड़ी देर बाद वापस आए हैं');
+
+  // Active-complaint summary upfront — proof of "no repeat"
+  addWiomMessage(
+    `<b>आपकी शिकायत अभी भी active है।</b> ✊\n\n` +
+    `<b>टिकट:</b> #${activeComplaint.id}\n` +
+    `<b>समस्या:</b> ${activeComplaint.problem}\n` +
+    `<b>टीम:</b> ${activeComplaint.team}\n` +
+    `<b>स्थिति:</b> ${activeComplaint.status}\n\n` +
+    `आपको कुछ करने की ज़रूरत नहीं — हम update करते रहेंगे।`
+  );
+  log('CONTINUITY', `resumed #${activeComplaint.id}`, false);
+
+  await wait(900);
+  await showTyping(1100);
+  addWiomMessage('एक update — टीम ने लाइन की दिक्कत ढूँढ ली है, अब ठीक कर रहे हैं।');
+  showTicketLine(activeComplaint.team, '8 मिनट');
+
+  await wait(2400);
+  setNetStatus('priority पर है');
+  showTicketLine(activeComplaint.team, '+5 मिनट');
+  await showTyping(1100);
+  addWiomMessage('देरी के लिए माफ़ कीजिए — इसे <b>priority</b> पर ले लिया है। बस थोड़ी देर और।');
+  log('PROGRESS', 'delay recovery (continuity)', true);
+
+  await wait(2400);
+  setNetStatus('समाधान confirm होना बाकी');
+  showTicketLine(activeComplaint.team, 'काम पूरा');
+  await showTyping(1200);
+  addWiomMessage('टीम का काम पूरा हो गया है। एक बार चेक कर के बताइए —');
+
+  await wait(500);
+  addWiomWithSideBySide('नेट अब ठीक चल रहा है?', [
+    { label: 'हाँ ठीक है',   onClick: () => onResolutionConfirm(true) },
+    { label: 'अभी भी नहीं',  onClick: () => onResolutionConfirm(false) }
+  ]);
+  log('RESOLUTION_CHECK', 'continuity → awaiting हाँ/नहीं', false);
+}
+
 // ============ SCENARIO PICKER ============
 
 const SCENARIOS = {
-  resolution: runOutageFlow
+  fresh:       runFreshFlow,
+  continuity:  runContinuityFlow
 };
-let currentScenario = 'resolution';
+let currentScenario = 'fresh';
 
 function setScenario(name) {
   currentScenario = name;
@@ -1792,7 +1934,8 @@ function pickScenario(caseName) {
 }
 
 contextNextBtn.addEventListener('click', showScenarios);
-document.getElementById('scenario1Card').addEventListener('click', () => pickScenario('resolution'));
+document.getElementById('scenario1Card').addEventListener('click', () => pickScenario('fresh'));
+document.getElementById('scenario2Card').addEventListener('click', () => pickScenario('continuity'));
 
 // Override the end-of-chat restart card behavior:
 // instead of re-running the same scenario, return to the scenario chooser.
