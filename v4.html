@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Complaint Intake — Chat Prototype (v4)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Roboto:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+:root {
+  --bg-page: #e8e4f0;
+  --bg-chat-pri: #ffffff;
+  --bg-chat-sec: #f5f6f7;
+  --bg-chat-tertiary: #ebedf0;
+  --bg-chat-quad: #b6b9bf;
+  --bg-surface: #faf9fc;
+  --cta-bg: #d9008d;
+  --cta-disable-bg: #a7a1b2;
+  --link-fg: #d9008d;
+  --pri-text: #161021;
+  --sec-text: #665e75;
+  --hint-text: #a7a1b2;
+  --stroke: #e8e4f0;
+  --radius-main: 16px;
+  --radius-inner: 12px;
+  --radius-large: 24px;
+  --radius-small: 8px;
+  --shadow: 0px 4px 12px 0px rgba(0,0,0,0.15);
+  --font: 'Noto Sans', 'Noto Sans Devanagari', sans-serif;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--font);
+  background: linear-gradient(135deg, #f4f0fa, #e8e4f0);
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: stretch;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+@media (min-width: 768px) and (pointer: fine) {
+  body {
+    padding: 24px 16px 24px;
+    gap: 16px;
+    justify-content: center;
+  }
+}
+.toolbar { display: none !important; }
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--sec-text);
+}
+.toolbar .title { font-weight: 600; color: var(--pri-text); }
+.toolbar button {
+  background: white;
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--pri-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.toolbar button:hover { background: #f5f6f7; }
+.scenarios {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid var(--stroke);
+  border-radius: 20px;
+  background: white;
+}
+.scenarios-label {
+  font-size: 11px;
+  color: var(--sec-text);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.scenario-pill {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--sec-text);
+}
+.scenario-pill:hover { background: #f5f6f7; }
+.scenario-pill.active {
+  background: #fff3a8;
+  border-color: #f0d97a;
+  color: #3f3249;
+  font-weight: 600;
+}
+.toolbar select {
+  background: white;
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.phone {
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  background: var(--bg-chat-sec);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 768px) and (pointer: fine) {
+  .phone {
+    width: 390px;
+    height: min(844px, 100%);
+    max-height: 844px;
+    flex: 0 0 auto;
+    border-radius: 40px;
+    box-shadow:
+      0 8px 24px 0 rgba(0,0,0,0.15),
+      0 0 0 8px #1f1830,
+      0 0 0 10px #2a2238;
+    border: none;
+  }
+}
+
+/* ===== Hotspot hint area (Figma-style filled overlay) =====
+   Semi-transparent blue overlay pulses on tappable areas when user taps empty. */
+.hint-pulse {
+  position: relative;
+}
+.hint-pulse::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(59, 130, 246, 0.35);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 100;
+  animation: hintFade 0.9s ease-out 2;
+  opacity: 0;
+}
+@keyframes hintFade {
+  0%, 100% { opacity: 0; }
+  25%, 60% { opacity: 1; }
+}
+.status-bar {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--pri-text);
+  background: white;
+  flex-shrink: 0;
+}
+.status-bar .indicators {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+}
+.status-bar .indicators .material-icons { font-size: 14px; }
+.top-app-bar {
+  background: white;
+  border-bottom: 1px solid var(--stroke);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px 8px 12px;
+  flex-shrink: 0;
+}
+.wiom-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.wiom-icon svg { width: 40px; height: 40px; display: block; }
+.active-net-card .home-icon svg { width: 24px; height: 24px; display: block; }
+.top-app-bar .text { flex: 1; min-width: 0; }
+.top-app-bar .title { font-size: 14px; font-weight: 500; color: var(--pri-text); line-height: 20px; }
+.top-app-bar .subtitle { font-size: 10px; color: var(--sec-text); line-height: 14px; }
+.top-app-bar .icon-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pri-text);
+}
+.top-app-bar .icon-btn .material-icons { font-size: 22px; }
+.sticky-bar {
+  padding: 12px 16px;
+  background: var(--bg-chat-sec);
+  flex-shrink: 0;
+}
+.active-net-card {
+  background: var(--bg-surface);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: var(--shadow);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.active-net-card .home-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cta-bg);
+  flex-shrink: 0;
+}
+.active-net-card .home-icon .material-icons { font-size: 24px; }
+.active-net-card .label { font-size: 12px; color: var(--sec-text); line-height: 16px; }
+.active-net-card .status { font-size: 16px; font-weight: 600; color: var(--pri-text); line-height: 24px; }
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scroll-behavior: smooth;
+}
+.messages::-webkit-scrollbar { width: 0; }
+
+.bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  max-width: 280px;
+  position: relative;
+}
+.bubble-wrap.wiom { align-self: flex-start; padding-left: 12px; }
+.bubble-wrap.user { align-self: flex-end; padding-right: 0; }
+
+.bubble {
+  background: var(--bg-chat-tertiary);
+  padding: 4px;
+  border-radius: 12px;
+  position: relative;
+}
+.bubble.user-bubble {
+  background: var(--bg-chat-pri);
+  border-radius: 12px;
+}
+.bubble.user-bubble.user-first {
+  border-top-right-radius: 0;
+}
+.bubble.wiom-first {
+  border-top-left-radius: 0;
+}
+.bubble-wrap.wiom.wiom-first::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--bg-chat-tertiary);
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+.bubble .content {
+  padding: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--pri-text);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.bubble .content b { font-weight: 700; }
+.bubble .content .check { color: #0a8a3e; font-weight: 600; }
+
+.status-check-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--pri-text);
+  padding: 3px 0;
+}
+.status-check-row + .status-check-row {
+  margin-top: 0;
+}
+.status-check-row .check-badge {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0a8a3e;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+  font-weight: 700;
+  line-height: 1;
+}
+.bubble .timestamp {
+  font-size: 10px;
+  color: var(--hint-text);
+  text-align: right;
+  padding: 0 8px 4px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+}
+.bubble .timestamp .material-icons {
+  font-size: 12px;
+  color: var(--hint-text);
+}
+.bubble .cta-link {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--link-fg);
+  cursor: pointer;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  user-select: none;
+}
+.bubble .cta-link:last-child {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+.bubble .cta-link:hover { background: rgba(217,0,141,0.04); }
+.bubble .cta-link.consumed {
+  pointer-events: none;
+  opacity: 0.55;
+}
+.bubble .cta-link.cta-disabled {
+  pointer-events: none;
+  /* Visible but inert — represents a system-deep-link action that the
+     prototype can't simulate. In production this fires a native intent. */
+}
+
+.media-tile {
+  width: 244px;
+  height: 184px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-neutral-sec, #f1edf7);
+}
+.media-tile .media-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.media-tile .play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.media-tile .play-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+}
+.media-tile .play-circle svg {
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+}
+.media-tile .media-timestamp {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding: 24px 8px 6px 48px;
+  background: linear-gradient(156deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.5) 100%);
+  font-size: 10px;
+  color: #faf9fc;
+  border-bottom-right-radius: 8px;
+  font-family: var(--font);
+}
+
+.restart-card {
+  align-self: center;
+  margin: 16px 0 4px;
+  background: #fff3a8;
+  border: 1px solid #f0d97a;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 13px;
+  color: #3f3249;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  user-select: none;
+  font-family: var(--font);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.restart-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+.restart-card svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ===== Yellow context + scenario screens ===== */
+.yellow-screen {
+  background: #FFD888;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+  z-index: 50;
+  transform: translateX(0);
+  transition: transform 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+.yellow-screen::-webkit-scrollbar { display: none; }
+.yellow-screen.hidden { transform: translateX(-100%); pointer-events: none; }
+.yellow-screen.queued { transform: translateX(100%); }
+
+.context-content {
+  padding: 24px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  flex: 1;
+  font-family: var(--font);
+}
+.context-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.context-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+.context-avatar {
+  width: 88px; height: 88px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex: 0 0 auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  background: #D92B90;
+}
+.context-avatar img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.context-q {
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 18px;
+  color: #565656;
+}
+.context-a {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 19px;
+  color: #D92B90;
+}
+.context-block {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.context-name {
+  font-size: 19px;
+  font-weight: 500;
+  color: #D92B90;
+  line-height: 26px;
+}
+.context-tag {
+  font-size: 12px;
+  font-weight: 500;
+  color: #000000;
+  line-height: 16px;
+}
+.context-cta-wrap {
+  flex: 0 0 auto;
+  padding: 16px 20px 20px;
+  position: sticky;
+  bottom: 0;
+  background: #FFD888;
+  box-shadow: 0 -6px 20px 0 #FFD888;
+}
+.btn-yellow-cta {
+  background: #444444;
+  color: #FFD888;
+  border: none;
+  border-radius: 14px;
+  padding: 13px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  width: 100%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.17);
+  cursor: pointer;
+  font-family: var(--font);
+}
+.btn-yellow-cta:active { transform: scale(0.98); }
+
+.scenario-content {
+  padding: 36px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  font-family: var(--font);
+}
+.scenario-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  color: #161021;
+  text-align: center;
+}
+.scenario-subtitle {
+  font-size: 13px;
+  line-height: 18px;
+  color: #565656;
+  text-align: center;
+  margin-top: -12px;
+}
+.scenario-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 120ms, box-shadow 120ms;
+}
+.scenario-card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.14); }
+.scenario-card-num {
+  font-size: 11px; font-weight: 700;
+  color: #D92B90;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.scenario-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 21px;
+  color: #161021;
+}
+.scenario-card-desc {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 19px;
+  color: #565656;
+}
+
+.bubble .cta-row {
+  display: flex;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  overflow: hidden;
+}
+.bubble .cta-cell {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--link-fg);
+  cursor: pointer;
+  user-select: none;
+}
+.bubble .cta-cell:hover { background: rgba(217,0,141,0.04); }
+.bubble .cta-cell.consumed {
+  pointer-events: none;
+  opacity: 0.55;
+}
+.bubble .cta-divider {
+  width: 1px;
+  background: rgba(0,0,0,0.08);
+  align-self: stretch;
+}
+
+.chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0 0 12px;
+  align-self: flex-start;
+  max-width: 320px;
+}
+.chips-row .chip {
+  background: white;
+  border: 1px solid var(--cta-bg);
+  color: var(--cta-bg);
+  border-radius: 18px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.chips-row .chip:hover { background: rgba(217,0,141,0.06); }
+
+.reply-preview {
+  background: var(--bg-chat-tertiary);
+  border-radius: var(--radius-small);
+  overflow: hidden;
+  display: flex;
+  margin: 4px 4px 0 4px;
+}
+.reply-preview .bar {
+  width: 4px;
+  background: var(--bg-chat-quad);
+  flex-shrink: 0;
+}
+.reply-preview .text {
+  padding: 6px 8px;
+  flex: 1;
+  min-width: 0;
+}
+.reply-preview .author {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pri-text);
+  line-height: 16px;
+}
+.reply-preview .quote {
+  font-size: 12px;
+  color: var(--sec-text);
+  line-height: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.typing-bubble-wrap {
+  align-self: flex-start;
+  padding-left: 12px;
+  position: relative;
+}
+.typing-bubble-wrap.wiom-first::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--bg-chat-tertiary);
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+.typing-bubble {
+  background: var(--bg-chat-tertiary);
+  padding: 14px 12px;
+  border-radius: 12px;
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.typing-bubble-wrap.wiom-first .typing-bubble {
+  border-top-left-radius: 0;
+}
+.typing-bubble span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sec-text);
+  animation: typing-dot 1.2s infinite;
+}
+.typing-bubble span:nth-child(2) { animation-delay: 0.15s; }
+.typing-bubble span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.typing-field {
+  background: white;
+  padding: 12px;
+  border-top: 1px solid var(--stroke);
+  display: flex;
+  gap: 8px;
+  align-items: end;
+  flex-shrink: 0;
+}
+.typing-field .input-shell {
+  flex: 1;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-large);
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--hint-text);
+  background: white;
+}
+.typing-field .send {
+  width: 48px;
+  height: 48px;
+  background: var(--cta-disable-bg);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+.typing-field .send .material-icons { font-size: 22px; }
+
+.bubble-enter {
+  animation: bubble-in 0.28s ease-out;
+}
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-log {
+  display: none !important;
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background: white;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 11px;
+  color: var(--sec-text);
+  width: 220px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.step-log h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--pri-text);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.step-log .log-entry {
+  padding: 4px 0;
+  border-bottom: 1px dashed #eee;
+  display: flex;
+  gap: 6px;
+}
+.step-log .log-entry:last-child { border-bottom: 0; }
+.step-log .log-entry .badge {
+  background: #f1edf7;
+  color: var(--pri-text);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-weight: 600;
+  font-size: 10px;
+  flex-shrink: 0;
+  height: 18px;
+}
+.step-log .log-entry.silent { opacity: 0.7; }
+.step-log .log-entry.silent .badge { background: #f5f6f7; color: var(--sec-text); }
+@media (max-width: 900px) { .step-log { display: none; } }
+
+/* ===== Previous-chat marker (Schedule_customer pattern) ===== */
+.prev-chat-card {
+  background: #FFDA40;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 4px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0px 1px 1.5px rgba(0,0,0,0.15);
+  align-self: stretch;
+  animation: bubble-in 0.28s ease-out;
+}
+.prev-chat-card-note {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  color: #D92130;
+}
+.prev-chat-card-text {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: #161021;
+}
+
+/* ===== Clickable input field with caret + working send button ===== */
+.typing-field .input-shell {
+  cursor: text;
+  display: flex;
+  align-items: center;
+}
+.typing-field .input-shell.placeholder {
+  color: var(--hint-text);
+}
+.typing-field .input-shell.typed {
+  color: var(--pri-text);
+}
+.typing-field .input-shell .caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 18px;
+  background: var(--cta-bg);
+  margin-left: 1px;
+  vertical-align: middle;
+  animation: caretBlink 1s steps(2) infinite;
+}
+@keyframes caretBlink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+.typing-field .send {
+  cursor: pointer;
+  transition: background 120ms;
+}
+.typing-field .send.armed {
+  background: var(--cta-bg);
+}
+.typing-field .send.armed:hover {
+  background: #c00080;
+}
+
+/* ===== Mobile keyboard mock ===== */
+.keyboard {
+  flex: 0 0 auto;
+  background: #D1D4DB;
+  height: 0;
+  overflow: hidden;
+  transition: height 220ms cubic-bezier(0.32, 0.72, 0, 1);
+  display: flex;
+  flex-direction: column;
+}
+.keyboard.open { height: 256px; }
+.kb-suggestions {
+  height: 44px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #D1D4DB;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+.kb-suggestions .kb-sg-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--pri-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+.kb-suggestions .kb-sg-icon .material-icons { font-size: 18px; }
+.kb-rows {
+  flex: 1;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kb-row {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+.kb-key {
+  flex: 1;
+  height: 36px;
+  background: #FFFFFF;
+  border-radius: 5px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--pri-text);
+  max-width: 32px;
+}
+.kb-key.wide { max-width: 48px; }
+.kb-key.space { max-width: none; flex: 4; }
+.kb-key.modifier { background: #ABAFB7; color: var(--pri-text); }
+.kb-key .material-icons { font-size: 18px; }
+
+/* ===== Engineer assignment card (post-ticket continuity) ===== */
+.engineer-card {
+  align-self: flex-start;
+  margin-left: 12px;
+  background: var(--bg-chat-tertiary);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  max-width: 280px;
+  width: 280px;
+  animation: bubble-in 0.28s ease-out;
+}
+.engineer-card .avatar {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--pri-text);
+}
+.engineer-card .avatar .material-icons { font-size: 24px; }
+.engineer-card .meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.engineer-card .meta .name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pri-text);
+  line-height: 18px;
+}
+.engineer-card .meta .role {
+  font-size: 11px;
+  color: var(--sec-text);
+  line-height: 14px;
+}
+.engineer-card .call-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cta-bg);
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 120ms;
+}
+.engineer-card .call-btn:hover { background: rgba(217,0,141,0.08); }
+.engineer-card .call-btn .material-icons { font-size: 22px; }
+
+/* ===== Status-check rows: failure styling ===== */
+.status-check-row .check-badge.fail {
+  background: #d92130;
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="title">Complaint Intake — Chat Prototype (v4)</span>
+  <div class="scenarios">
+    <span class="scenarios-label">Scenario</span>
+    <button class="scenario-pill active" data-scenario="resolution" onclick="setScenario('resolution')">मेरा नेट नहीं चल रहा</button>
+  </div>
+  <button onclick="restart()"><span class="material-icons" style="font-size:14px">refresh</span> Restart</button>
+</div>
+
+<div class="phone">
+
+  <!-- ============ CONTEXT (DESIGN INTENT) ============ -->
+  <section class="yellow-screen" id="contextScreen">
+    <div class="context-content">
+      <div class="context-header">
+        <div class="context-user-info">
+          <div class="context-q">यूजर कौन है?</div>
+          <div class="context-name">इन्दु वर्मा</div>
+          <div class="context-tag">वर्मा परिवार का एक सदस्य।</div>
+        </div>
+        <div class="context-avatar">
+          <img src="indu-verma.png" alt="इन्दु वर्मा">
+        </div>
+      </div>
+
+      <div class="context-block">
+        <div class="context-q">वर्मा जी इस स्क्रीन पर क्यों आए?</div>
+        <div class="context-a">घर का नेट ठीक से नहीं चल रहा। फ़ोन-रीस्टार्ट करके देख लिया, फिर भी कुछ हुआ नहीं। बिना कॉल किए ही चैट खोल कर देख रहे हैं कि क्या किया जा सकता है।</div>
+      </div>
+
+      <div class="context-block">
+        <div class="context-q">वर्मा जी इस स्टेप पर पहुँचने से पहले क्या कर रहे थे?</div>
+        <div class="context-a">रोज़ की तरह नेट चला रहे थे — काम में, बच्चों की पढ़ाई में, ऑफिस के मेल में। आज अचानक दिक्कत आ गई। पहले फ़ोन रीस्टार्ट किया, फिर बाहर निकल कर सिग्नल चेक किया। कोई फ़ायदा नहीं हुआ।</div>
+      </div>
+
+      <div class="context-block">
+        <div class="context-q">इस स्टेप के बाद वर्मा जी क्या करेंगे?</div>
+        <div class="context-a">अगर समाधान हो गया — वापस अपने काम पर लौट जाएंगे। अगर नहीं हुआ — टीम की जाँच का इंतज़ार करेंगे और नेट सही होते ही व्योम से सूचना मिलेगी।</div>
+      </div>
+
+      <div class="context-block">
+        <div class="context-q">वर्मा जी को कैसा महसूस होगा अगर यह दुनिया का सबसे बेहतरीन डिज़ाइन हो?</div>
+        <div class="context-a">"मेरी बात सुनी गई।" कॉल करने का झंझट नहीं, बार-बार समझाने का बोझ नहीं। चैट में सीधा बता दिया गया — क्या हो रहा है, क्या करना है, और टीम काम कर रही है या नहीं। बेफ़िक्र हो कर अपने काम पर लौट सकें।</div>
+      </div>
+    </div>
+    <div class="context-cta-wrap">
+      <button class="btn-yellow-cta" id="contextNextBtn">Take me to the scenarios</button>
+    </div>
+  </section>
+
+  <!-- ============ SCENARIO CHOOSER ============ -->
+  <section class="yellow-screen queued" id="scenarioScreen">
+    <div class="scenario-content">
+      <div class="scenario-title">v4 — Resolution flow</div>
+      <div class="scenario-subtitle">तीन fixes लागू हैं — system status check, recheck gate, post-ticket engineer chain।</div>
+
+      <div class="scenario-card" id="scenario1Card" data-case="resolution">
+        <div class="scenario-card-num">Case · Full resolution</div>
+        <div class="scenario-card-title">"मेरा नेट नहीं चल रहा"</div>
+        <div class="scenario-card-desc">रिचार्ज contradiction acknowledge → system status check (recharge/Wi-Fi/server) → 2-option pick → troubleshoot steps → <b>"क्या अब नेट सही चल रहा है?"</b> recheck gate → हाँ पर close · नहीं पर ticket → engineer assignment card → resolution check। User का objective "नेट चलना" तक चैट साथ रहती है।</div>
+      </div>
+    </div>
+    <div class="context-cta-wrap"></div>
+  </section>
+
+  <div class="status-bar">
+    <span>4:35 PM</span>
+    <div class="indicators">
+      <span style="font-size:12px">50%</span>
+      <span class="material-icons">battery_full</span>
+      <span class="material-icons">signal_cellular_alt</span>
+      <span class="material-icons">wifi</span>
+    </div>
+  </div>
+  <div class="top-app-bar">
+    <div class="wiom-icon">
+      <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clip0_wiom_icon)">
+          <path d="M4 24C4 12.9543 12.9543 4 24 4C35.0457 4 44 12.9543 44 24C44 35.0457 35.0457 44 24 44C12.9543 44 4 35.0457 4 24Z" fill="#D9008D"/>
+          <rect x="4" y="4" width="40" height="40" fill="white"/>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M31.946 30.54C32.4232 30.5413 32.8103 30.928 32.8103 31.4033C32.8101 31.8798 32.4232 32.2656 31.946 32.2656C31.469 32.2655 31.0839 31.8797 31.0837 31.4033C31.0837 30.9269 31.4702 30.5402 31.946 30.54ZM15.0583 18.2197C15.7213 18.0974 16.4051 18.0943 17.0603 18.2012C17.7167 18.3055 18.3476 18.5092 18.9382 18.7783C19.5301 19.0462 20.0812 19.3841 20.5945 19.7666C20.6575 19.8141 20.726 19.8616 20.7839 19.9092L20.9626 20.0508C21.0826 20.1448 21.2017 20.2413 21.3191 20.3379C21.4377 20.4332 21.5539 20.531 21.6687 20.6289C21.7847 20.7268 21.8989 20.8253 22.0124 20.9258C22.9216 21.723 23.7771 22.5596 24.6218 23.3877C25.0422 23.8037 25.4605 24.2187 25.8796 24.627C26.3 25.0364 26.7165 25.4294 27.1472 25.8066C28.0022 26.5613 28.9052 27.2445 29.8699 27.6953C30.3509 27.922 30.8479 28.0763 31.3484 28.1445C31.5985 28.1767 31.8499 28.1861 32.1013 28.1758C32.3527 28.1629 32.6031 28.125 32.8532 28.0684C33.1034 28.013 33.3498 27.9266 33.5935 27.8301C33.7147 27.776 33.8381 27.7291 33.9568 27.666C34.016 27.6364 34.0791 27.6074 34.1345 27.5752L34.3034 27.4814C34.3614 27.4518 34.4144 27.4146 34.4685 27.3799C34.5213 27.3439 34.5781 27.3117 34.6296 27.2744C34.7315 27.1958 34.8401 27.1234 34.9343 27.0371C35.1341 26.8736 35.3107 26.6843 35.4782 26.4873C35.6433 26.2877 35.7868 26.0708 35.9197 25.8467C36.0434 25.6188 36.1581 25.3832 36.2419 25.1348C36.3258 24.8875 36.3982 24.6323 36.4343 24.3721L36.4509 24.2744L36.4607 24.1768C36.4671 24.1111 36.477 24.0451 36.4822 23.9795C36.4873 23.8481 36.4984 23.7153 36.4919 23.584C36.4945 23.4514 36.4795 23.3201 36.4704 23.1875C36.464 23.1218 36.4521 23.0559 36.4431 22.9902L36.4284 22.8906L36.3669 22.5977C36.3187 22.404 36.252 22.2147 36.1824 22.0264C36.1296 21.9042 36.0807 21.7782 36.0163 21.6611C35.9596 21.5388 35.8874 21.4248 35.8191 21.3076C35.6721 21.081 35.5106 20.861 35.3249 20.6602C35.1456 20.4528 34.9362 20.2715 34.7234 20.0938C34.668 20.0513 34.6118 20.0109 34.5564 19.9697C34.4996 19.9298 34.4448 19.8834 34.3855 19.8486L34.2107 19.7363L34.1228 19.6797L34.031 19.6299C33.546 19.3581 33.012 19.166 32.4509 19.0732C31.8912 18.9818 31.3083 18.9778 30.7331 19.0615C30.1553 19.1388 29.5852 19.2961 29.0281 19.4971C29.5477 19.2125 30.1047 18.9865 30.6863 18.8281C31.2692 18.6736 31.8823 18.6097 32.4988 18.6406C32.5761 18.6406 32.6528 18.6524 32.7302 18.6602C32.8074 18.6691 32.8847 18.674 32.9607 18.6855L33.1902 18.7266L33.3054 18.749L33.4187 18.7773L33.6452 18.8359C33.7213 18.8553 33.7941 18.885 33.8689 18.9082C33.9423 18.9352 34.0184 18.9564 34.0906 18.9873L34.3074 19.0781L34.4157 19.125L34.5202 19.1777L34.7292 19.2861C34.8 19.3209 34.8644 19.3657 34.9314 19.4043C34.9984 19.4455 35.0658 19.4858 35.1316 19.5283C35.3894 19.706 35.6462 19.8938 35.8757 20.1152C36.1117 20.329 36.3206 20.5741 36.5154 20.8291C36.6082 20.9604 36.704 21.0905 36.7839 21.2295C36.8716 21.3647 36.9438 21.5104 37.0173 21.6533C37.1552 21.9455 37.2772 22.2481 37.3572 22.5635L37.3894 22.6807L37.4157 22.8008C37.4325 22.8805 37.4517 22.959 37.4646 23.04C37.4878 23.201 37.5161 23.3628 37.5251 23.5264C37.5431 23.6885 37.5418 23.8522 37.5456 24.0156C37.5443 24.098 37.5407 24.1794 37.5368 24.2617L37.53 24.3838L37.5173 24.5059C37.489 24.8329 37.4194 25.155 37.3318 25.4717C37.2428 25.7898 37.1172 26.0954 36.9753 26.3955C36.8967 26.541 36.8247 26.691 36.7331 26.8301C36.6881 26.8995 36.6483 26.9732 36.5993 27.04L36.4548 27.2422C36.2524 27.5061 36.0341 27.7594 35.7878 27.9834C35.6692 28.1006 35.5365 28.2027 35.4089 28.3096C35.3432 28.3611 35.2748 28.4078 35.2077 28.458C35.1394 28.507 35.0716 28.5574 35.0007 28.5986L34.7878 28.7295C34.717 28.7732 34.6461 28.8078 34.574 28.8477C34.4334 28.9275 34.2835 28.9953 34.1365 29.0674C33.8362 29.1986 33.5267 29.319 33.2019 29.4053C32.8781 29.4916 32.544 29.5553 32.2048 29.585C31.8657 29.6133 31.5241 29.6067 31.1863 29.5732C30.5117 29.5011 29.8612 29.3113 29.2654 29.0498C29.1145 28.9867 28.9697 28.9146 28.824 28.8438C28.7519 28.8077 28.6819 28.7697 28.6111 28.7324C28.5402 28.6951 28.4704 28.6564 28.4021 28.6152C28.1236 28.4582 27.8594 28.2854 27.6003 28.1104C27.0844 27.7549 26.5985 27.3716 26.1355 26.9736C25.6737 26.5756 25.2268 26.1586 24.7986 25.7451C24.3691 25.3317 23.9446 24.9157 23.5241 24.501C22.6858 23.669 21.8525 22.8493 20.9909 22.0791C20.884 21.9826 20.7759 21.8859 20.6677 21.792C20.5594 21.6967 20.4511 21.6025 20.3415 21.5098C20.232 21.4171 20.1223 21.3245 20.0115 21.2344L19.8445 21.0996C19.789 21.0532 19.7365 21.0152 19.6823 20.9727C19.253 20.6418 18.7925 20.3535 18.3142 20.1191C17.3572 19.6503 16.3042 19.4271 15.2956 19.5752C15.1681 19.5855 15.0456 19.623 14.9206 19.6475L14.8259 19.668C14.795 19.6744 14.765 19.6873 14.7341 19.6963L14.5515 19.7549L14.4597 19.7832C14.4289 19.7922 14.3994 19.8078 14.3698 19.8193L14.1872 19.8955C14.0649 19.9418 13.9476 20.0043 13.8279 20.0596C13.3585 20.2888 12.9498 20.6058 12.6003 20.9805C12.5539 21.0255 12.5156 21.077 12.4743 21.126C12.4345 21.1761 12.39 21.2228 12.3552 21.2754C12.2818 21.3809 12.2028 21.4829 12.1384 21.5947C12.0675 21.7016 12.0105 21.8193 11.9499 21.9326C11.919 21.9893 11.8969 22.0514 11.8698 22.1094C11.8441 22.1684 11.8159 22.2275 11.7966 22.2891L11.7302 22.4736C11.7096 22.5354 11.6948 22.599 11.6755 22.6621L11.6482 22.7559C11.6404 22.788 11.6341 22.8204 11.6277 22.8525L11.5857 23.0459C11.5444 23.3059 11.5124 23.5685 11.5124 23.835C11.5124 24.1003 11.5282 24.3688 11.5759 24.6328C11.594 24.7653 11.6286 24.8952 11.657 25.0264C11.6737 25.092 11.6946 25.1551 11.7126 25.2207L11.7409 25.3174C11.7513 25.3496 11.7625 25.3809 11.7741 25.4131L11.8425 25.6035L11.9626 25.8818L12.0095 25.9717L12.1023 26.1523L12.2068 26.3271C12.2248 26.3555 12.2401 26.3867 12.2595 26.415L12.3171 26.499C12.3557 26.5543 12.3934 26.612 12.4333 26.666L12.5603 26.8271C12.6002 26.8825 12.6467 26.9332 12.6931 26.9834C12.7394 27.0335 12.7832 27.086 12.8308 27.1348L12.9782 27.2783C13.0025 27.3013 13.0269 27.3266 13.0525 27.3496L13.1316 27.417L13.2888 27.5508L13.4548 27.6738L13.5388 27.7354C13.5672 27.756 13.597 27.7727 13.6267 27.792L13.8025 27.9043C14.2796 28.1914 14.8138 28.393 15.3669 28.5205C15.9227 28.6402 16.503 28.6685 17.0769 28.6016C17.6403 28.541 18.2064 28.3624 18.7312 28.0869C18.254 28.4397 17.6958 28.6911 17.1091 28.8418C16.5184 28.9809 15.9005 29.0179 15.2878 28.9561C14.6752 28.8891 14.0689 28.7204 13.5027 28.4512C13.3648 28.3778 13.2191 28.3137 13.0876 28.2275L12.8845 28.1035L12.5945 27.8984C12.5636 27.874 12.5325 27.8486 12.5017 27.8242L12.3171 27.6738C12.2578 27.621 12.2016 27.5648 12.1423 27.5107C12.0844 27.4568 12.0261 27.4031 11.9734 27.3428C11.086 26.4232 10.5518 25.1683 10.4743 23.8701C10.3853 22.5744 10.8009 21.2162 11.6599 20.1807C12.0905 19.6696 12.6153 19.2295 13.1941 18.9102C13.3385 18.8329 13.4794 18.7512 13.6316 18.6855L13.8562 18.583C13.8935 18.5663 13.9295 18.5464 13.9695 18.5322L14.0886 18.4902L14.3259 18.4053C14.3657 18.3924 14.4042 18.3755 14.4441 18.3652L14.5671 18.333C14.7309 18.2931 14.892 18.2416 15.0583 18.2197ZM15.9499 15.457C16.427 15.4583 16.814 15.8429 16.8142 16.3193C16.8142 16.7959 16.4272 17.1826 15.9499 17.1826C15.4728 17.1825 15.0876 16.7958 15.0876 16.3193C15.0878 15.843 15.4742 15.4572 15.9499 15.457Z" fill="#D9008D"/>
+        </g>
+        <path d="M24 4.5C34.7696 4.5 43.5 13.2304 43.5 24C43.5 34.7696 34.7696 43.5 24 43.5C13.2304 43.5 4.5 34.7696 4.5 24C4.5 13.2304 13.2304 4.5 24 4.5Z" stroke="#E8E4F0"/>
+        <defs>
+          <clipPath id="clip0_wiom_icon">
+            <path d="M4 24C4 12.9543 12.9543 4 24 4C35.0457 4 44 12.9543 44 24C44 35.0457 35.0457 44 24 44C12.9543 44 4 35.0457 4 24Z" fill="white"/>
+          </clipPath>
+        </defs>
+      </svg>
+    </div>
+    <div class="text">
+      <div class="title">व्योम</div>
+      <div class="subtitle">ऑनलाइन</div>
+    </div>
+    <div class="icon-btn"><span class="material-icons">call</span></div>
+    <div class="icon-btn"><span class="material-icons">more_vert</span></div>
+  </div>
+  <div class="sticky-bar">
+    <div class="active-net-card">
+      <div class="home-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g clip-path="url(#clip0_home_wifi)">
+            <path d="M10.7998 1.4C11.5109 0.866667 12.4891 0.866667 13.2002 1.4L21.2002 7.16855C21.7036 7.54617 21.9999 8.13886 22 8.76816V19.9996C22 21.1042 21.1046 21.9996 20 21.9996H4C2.89543 21.9996 2 21.1042 2 19.9996V8.76816C2.00015 8.13886 2.29637 7.54617 2.7998 7.16855L10.7998 1.4ZM4 8.76816V19.9996H20V8.76816L12 2.99961L4 8.76816ZM8 12.9986C8.55322 12.9986 8.99982 13.4455 9 13.9986V16.9986C8.99992 17.5519 8.55329 17.9986 8 17.9986C7.44671 17.9986 7.00008 17.5519 7 16.9986V13.9986C7.00018 13.4455 7.44678 12.9986 8 12.9986ZM12 10.9986C12.5533 10.9986 13 11.4453 13 11.9986V16.9986C12.9999 17.5519 12.5533 17.9986 12 17.9986C11.4467 17.9986 11.0001 17.5519 11 16.9986V11.9986C11 11.4453 11.4467 10.9986 12 10.9986ZM16 8.99863C16.5533 8.99863 17 9.4453 17 9.99863V16.9986C16.9999 17.5519 16.5533 17.9986 16 17.9986C15.4467 17.9986 15.0001 17.5519 15 16.9986V9.99863C15 9.4453 15.4467 8.99863 16 8.99863Z" fill="#A7A1B2"/>
+          </g>
+          <defs>
+            <clipPath id="clip0_home_wifi"><rect width="24" height="24" fill="white"/></clipPath>
+          </defs>
+        </svg>
+      </div>
+      <div>
+        <div class="label">घर का नेट: रमेश</div>
+        <div><span class="label">स्थिति: </span><span class="status" id="netStatus">चालू है</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="messages" id="messages"></div>
+  <div class="typing-field">
+    <div class="input-shell placeholder" id="inputField">यहाँ पूछें....</div>
+    <div class="send" id="sendBtn"><span class="material-icons">send</span></div>
+  </div>
+
+  <div class="keyboard" id="keyboard">
+    <div class="kb-suggestions">
+      <div class="kb-sg-icon"><span class="material-icons">arrow_back_ios</span></div>
+      <div class="kb-sg-icon"><span class="material-icons">gif</span></div>
+      <div class="kb-sg-icon"><span class="material-icons">settings</span></div>
+      <div class="kb-sg-icon"><span class="material-icons">translate</span></div>
+      <div class="kb-sg-icon"><span class="material-icons">emoji_emotions</span></div>
+      <div class="kb-sg-icon"><span class="material-icons">more_horiz</span></div>
+      <div class="kb-sg-icon"><span class="material-icons">mic</span></div>
+    </div>
+    <div class="kb-rows">
+      <div class="kb-row">
+        <div class="kb-key">q</div><div class="kb-key">w</div><div class="kb-key">e</div>
+        <div class="kb-key">r</div><div class="kb-key">t</div><div class="kb-key">y</div>
+        <div class="kb-key">u</div><div class="kb-key">i</div><div class="kb-key">o</div>
+        <div class="kb-key">p</div>
+      </div>
+      <div class="kb-row" style="padding: 0 18px;">
+        <div class="kb-key">a</div><div class="kb-key">s</div><div class="kb-key">d</div>
+        <div class="kb-key">f</div><div class="kb-key">g</div><div class="kb-key">h</div>
+        <div class="kb-key">j</div><div class="kb-key">k</div><div class="kb-key">l</div>
+      </div>
+      <div class="kb-row">
+        <div class="kb-key wide modifier"><span class="material-icons">arrow_upward</span></div>
+        <div class="kb-key">z</div><div class="kb-key">x</div><div class="kb-key">c</div>
+        <div class="kb-key">v</div><div class="kb-key">b</div><div class="kb-key">n</div>
+        <div class="kb-key">m</div>
+        <div class="kb-key wide modifier"><span class="material-icons">backspace</span></div>
+      </div>
+      <div class="kb-row">
+        <div class="kb-key wide modifier" style="font-size: 12px;">?123</div>
+        <div class="kb-key modifier" style="font-size: 12px;">,</div>
+        <div class="kb-key modifier"><span class="material-icons">language</span></div>
+        <div class="kb-key space"></div>
+        <div class="kb-key modifier" style="font-size: 12px;">.</div>
+        <div class="kb-key wide modifier"><span class="material-icons">keyboard_return</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="step-log" id="stepLog">
+  <h4>PRD Step Trace</h4>
+  <div id="logEntries"></div>
+</div>
+
+<script>
+const messages = document.getElementById('messages');
+const logEntries = document.getElementById('logEntries');
+let lastSender = null;   // 'wiom' | 'user' | null
+
+function isFirstFor(sender) {
+  return lastSender !== sender;
+}
+
+function log(step, label, silent = false) {
+  const entry = document.createElement('div');
+  entry.className = 'log-entry' + (silent ? ' silent' : '');
+  entry.innerHTML = `<span class="badge">${step}</span><span>${label}</span>`;
+  logEntries.appendChild(entry);
+  entry.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function scrollToEnd() {
+  setTimeout(() => { messages.scrollTop = messages.scrollHeight; }, 30);
+}
+
+function wait(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+function makeTimestamp(withTick = false) {
+  let t = '<div class="timestamp">10:15 AM';
+  if (withTick) t += '<span class="material-icons">done_all</span>';
+  t += '</div>';
+  return t;
+}
+
+async function showTyping(duration = 1200) {
+  const wrap = document.createElement('div');
+  wrap.className = 'typing-bubble-wrap bubble-enter';
+  if (isFirstFor('wiom')) {
+    wrap.classList.add('wiom-first');
+  }
+  // NOTE: typing does NOT update lastSender — so the real Wiom message that
+  // replaces this typing bubble still counts as "first" and gets its own notch.
+  wrap.innerHTML = '<div class="typing-bubble"><span></span><span></span><span></span></div>';
+  messages.appendChild(wrap);
+  scrollToEnd();
+  await wait(duration);
+  wrap.remove();
+}
+
+function mediaTileHTML(showOverlayTimestamp) {
+  return `
+    <div class="media-tile">
+      <svg class="media-thumb" viewBox="0 0 244 184" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <rect width="244" height="184" fill="#f1edf7"/>
+        <line x1="105" y1="72" x2="98" y2="54" stroke="#3f3249" stroke-width="3" stroke-linecap="round"/>
+        <line x1="139" y1="72" x2="146" y2="54" stroke="#3f3249" stroke-width="3" stroke-linecap="round"/>
+        <rect x="82" y="72" width="80" height="44" rx="8" fill="#3f3249"/>
+        <circle cx="100" cy="94" r="2.5" fill="#7be88f"/>
+        <circle cx="115" cy="94" r="2.5" fill="#a7a1b2"/>
+        <circle cx="130" cy="94" r="2.5" fill="#a7a1b2"/>
+        <circle cx="145" cy="94" r="2.5" fill="#a7a1b2"/>
+        <path d="M120 116 Q120 134 100 140 Q72 146 56 144" stroke="#665e75" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <rect x="38" y="137" width="20" height="14" rx="3" fill="#665e75"/>
+        <line x1="42" y1="134" x2="42" y2="130" stroke="#665e75" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="54" y1="134" x2="54" y2="130" stroke="#665e75" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M32 144 L10 144 M18 136 L10 144 L18 152" stroke="#d9008d" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="play-overlay">
+        <div class="play-circle">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z" fill="#d9008d"/></svg>
+        </div>
+      </div>
+      ${showOverlayTimestamp ? '<div class="media-timestamp">10:15 AM</div>' : ''}
+    </div>
+  `;
+}
+
+function addWiomMessage(html, opts = {}) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap wiom bubble-enter';
+  if (isFirstFor('wiom')) {
+    wrap.classList.add('wiom-first');
+  }
+  lastSender = 'wiom';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  if (wrap.classList.contains('wiom-first')) bubble.classList.add('wiom-first');
+  let inner = '';
+  if (opts.media) inner += mediaTileHTML(false);
+  inner += `<div class="content">${html}</div>${makeTimestamp(false)}`;
+  bubble.innerHTML = inner;
+  if (opts.cta) {
+    opts.cta.forEach(c => {
+      const cta = document.createElement('div');
+      cta.className = 'cta-link';
+      cta.textContent = c.label;
+      if (c.disabled) {
+        cta.classList.add('cta-disabled');
+      } else {
+        cta.onclick = () => {
+          bubble.querySelectorAll('.cta-link:not(.cta-disabled)').forEach(el => el.classList.add('consumed'));
+          c.onClick();
+        };
+      }
+      bubble.appendChild(cta);
+    });
+  }
+  wrap.appendChild(bubble);
+  messages.appendChild(wrap);
+  scrollToEnd();
+  return wrap;
+}
+
+function addWiomStatusCheck(items) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap wiom bubble-enter';
+  if (isFirstFor('wiom')) {
+    wrap.classList.add('wiom-first');
+  }
+  lastSender = 'wiom';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  if (wrap.classList.contains('wiom-first')) bubble.classList.add('wiom-first');
+  let rowsHtml = '';
+  items.forEach(item => {
+    rowsHtml += `<div class="status-check-row"><span class="check-badge">✓</span><span>${item}</span></div>`;
+  });
+  bubble.innerHTML = `<div class="content">${rowsHtml}</div>${makeTimestamp(false)}`;
+  wrap.appendChild(bubble);
+  messages.appendChild(wrap);
+  scrollToEnd();
+}
+
+function addRestartCard() {
+  const card = document.createElement('div');
+  card.className = 'restart-card bubble-enter';
+  card.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 12a8 8 0 0 1 13.66-5.66M20 4v5h-5M20 12a8 8 0 0 1-13.66 5.66M4 20v-5h5" stroke="#3f3249" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>Restart flow</span>
+  `;
+  card.onclick = () => restart();
+  messages.appendChild(card);
+  scrollToEnd();
+}
+
+function addWiomTicketMessage({ticketId, problem}) {
+  const message = `आपकी शिकायत दर्ज कर ली गई है।\n\n<b>समस्या:</b> ${problem}\n<b>टिकट ID:</b> ${ticketId}\n\nटीम आपकी समस्या पर काम कर रही है। समाधान होते ही आपको बताएंगे।`;
+  return addWiomMessage(message);
+}
+
+const PROBLEM_META = {
+  not_working:  'NET SUPPLY DOWN (Type 3, 4hr, PARTNER)',
+  intermittent: 'INTERMITTENT NET / RUK-RUK (Type 4, 24hr, PARTNER)'
+};
+
+function addWiomMediaMessage() {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap wiom bubble-enter';
+  if (isFirstFor('wiom')) {
+    wrap.classList.add('wiom-first');
+  }
+  lastSender = 'wiom';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  if (wrap.classList.contains('wiom-first')) bubble.classList.add('wiom-first');
+  bubble.innerHTML = `
+    <div class="media-tile">
+      <svg class="media-thumb" viewBox="0 0 244 184" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <rect width="244" height="184" fill="#f1edf7"/>
+        <line x1="105" y1="72" x2="98" y2="54" stroke="#3f3249" stroke-width="3" stroke-linecap="round"/>
+        <line x1="139" y1="72" x2="146" y2="54" stroke="#3f3249" stroke-width="3" stroke-linecap="round"/>
+        <rect x="82" y="72" width="80" height="44" rx="8" fill="#3f3249"/>
+        <circle cx="100" cy="94" r="2.5" fill="#7be88f"/>
+        <circle cx="115" cy="94" r="2.5" fill="#a7a1b2"/>
+        <circle cx="130" cy="94" r="2.5" fill="#a7a1b2"/>
+        <circle cx="145" cy="94" r="2.5" fill="#a7a1b2"/>
+        <path d="M120 116 Q120 134 100 140 Q72 146 56 144" stroke="#665e75" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <rect x="38" y="137" width="20" height="14" rx="3" fill="#665e75"/>
+        <line x1="42" y1="134" x2="42" y2="130" stroke="#665e75" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="54" y1="134" x2="54" y2="130" stroke="#665e75" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M32 144 L10 144 M18 136 L10 144 L18 152" stroke="#d9008d" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="play-overlay">
+        <div class="play-circle">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z" fill="#d9008d"/></svg>
+        </div>
+      </div>
+      <div class="media-timestamp">10:15 AM</div>
+    </div>
+  `;
+  wrap.appendChild(bubble);
+  messages.appendChild(wrap);
+  scrollToEnd();
+}
+
+function addWiomWithSideBySide(html, options) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap wiom bubble-enter';
+  if (isFirstFor('wiom')) {
+    wrap.classList.add('wiom-first');
+  }
+  lastSender = 'wiom';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  if (wrap.classList.contains('wiom-first')) bubble.classList.add('wiom-first');
+  bubble.innerHTML = `<div class="content">${html}</div>${makeTimestamp(false)}`;
+  const row = document.createElement('div');
+  row.className = 'cta-row';
+  options.forEach((opt, idx) => {
+    if (idx > 0) {
+      const divider = document.createElement('div');
+      divider.className = 'cta-divider';
+      row.appendChild(divider);
+    }
+    const cell = document.createElement('div');
+    cell.className = 'cta-cell';
+    cell.textContent = opt.label;
+    cell.onclick = () => {
+      row.querySelectorAll('.cta-cell').forEach(el => el.classList.add('consumed'));
+      opt.onClick();
+    };
+    row.appendChild(cell);
+  });
+  bubble.appendChild(row);
+  wrap.appendChild(bubble);
+  messages.appendChild(wrap);
+  scrollToEnd();
+}
+
+function addChipsRow(chips) {
+  const row = document.createElement('div');
+  row.className = 'chips-row bubble-enter';
+  chips.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.textContent = c.label;
+    b.onclick = () => {
+      row.remove();
+      c.onClick();
+    };
+    row.appendChild(b);
+  });
+  messages.appendChild(row);
+  scrollToEnd();
+}
+
+function addUserMessage(text, replyPreviewText = null) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap user bubble-enter';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble user-bubble';
+  if (isFirstFor('user')) {
+    bubble.classList.add('user-first');
+  }
+  lastSender = 'user';
+  let inner = '';
+  if (replyPreviewText) {
+    inner += `<div class="reply-preview"><div class="bar"></div><div class="text"><div class="author">व्योम</div><div class="quote">${replyPreviewText}</div></div></div>`;
+  }
+  inner += `<div class="content">${text}</div>${makeTimestamp(true)}`;
+  bubble.innerHTML = inner;
+  wrap.appendChild(bubble);
+  messages.appendChild(wrap);
+  scrollToEnd();
+}
+
+// ============ FLOW ENGINE (v4 — with 3 fixes) ============
+
+const INTENT_TEXT = 'मेरा नेट नहीं चल रहा';
+const netStatusEl = document.getElementById('netStatus');
+function setNetStatus(text) { if (netStatusEl) netStatusEl.textContent = text; }
+
+function addPrevChatCard(text) {
+  const card = document.createElement('div');
+  card.className = 'prev-chat-card';
+  card.innerHTML = `
+    <div class="prev-chat-card-note">This is not part of design</div>
+    <div class="prev-chat-card-text">${text}</div>`;
+  messages.appendChild(card);
+  scrollToEnd();
+}
+
+// Engineer card (post-ticket continuity)
+function addEngineerCard({name, role}) {
+  const card = document.createElement('div');
+  card.className = 'engineer-card';
+  card.innerHTML = `
+    <div class="avatar"><span class="material-icons">engineering</span></div>
+    <div class="meta">
+      <div class="name">${name}</div>
+      <div class="role">${role}</div>
+    </div>
+    <div class="call-btn" title="Call ${name}"><span class="material-icons">call</span></div>`;
+  messages.appendChild(card);
+  scrollToEnd();
+  // The card breaks the "wiom run" — next wiom message gets a fresh notch
+  lastSender = null;
+}
+
+// Status-check rows with mixed ✓ / ✗
+function addStatusCheckMixed(items) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap wiom bubble-enter';
+  if (isFirstFor('wiom')) wrap.classList.add('wiom-first');
+  lastSender = 'wiom';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  if (wrap.classList.contains('wiom-first')) bubble.classList.add('wiom-first');
+  const rows = items.map(it => {
+    const cls = it.ok ? '' : 'fail';
+    const mark = it.ok ? '✓' : '!';
+    return `<div class="status-check-row"><span class="check-badge ${cls}">${mark}</span><span>${it.text}</span></div>`;
+  }).join('');
+  bubble.innerHTML = `<div class="content">${rows}</div>` +
+    `<div class="timestamp">10:15 AM</div>`;
+  wrap.appendChild(bubble);
+  messages.appendChild(wrap);
+  scrollToEnd();
+}
+
+// -------- Seed: prev-chat history (same as v3) --------
+async function runOutageFlow() {
+  setNetStatus('चालू है');
+  addPrevChatCard('पिछली चैट का इतिहास');
+
+  const offerBubble = addWiomMessage(
+    '<b>रिचार्ज का सुझाव</b>\n\nबिना रुकावट नेट चलाने के लिए <b>1 दिन</b>, <b>2 दिन</b> या <b>7 दिन</b> का प्लान रिचार्ज कर सकते हैं।',
+    { cta: [{ label: 'रिचार्ज करें', onClick: () => {} }] }
+  );
+  offerBubble.querySelectorAll('.cta-link').forEach(el => el.classList.add('consumed'));
+
+  addUserMessage('✔️ हो गया', 'बिना रुकावट नेट चलाने के लिए 1 दिन, 2 दिन या 7 दिन का प्लान रिचार्ज कर सकते हैं');
+
+  addWiomMessage(
+    'बहुत बढ़िया! आपका <b>₹150</b> का रिचार्ज सफल हो गया है।\n\n<b>इस अकाउंट पर:</b>\nनेट का नाम: Wiom Ramesh 1234\nरजिस्टर्ड मोबाइल नंबर: 9876543210\n\nअब बिना रुकावट नेट चलाएं 👍'
+  );
+
+  addWiomMessage(
+    'आपका <b>2 दिन</b> का रिचार्ज सफल रहा!\nआपका नेट <b>28 दिसंबर, 5:15 pm</b> तक बिना रुकावट के चालू रहेगा।\n\nमन भर कर इस्तेमाल करें और उसके बाद अपनी ज़रूरत के हिसाब से रिचार्ज करें।'
+  );
+
+  log('entry', 'awaiting user typed intent', false);
+}
+
+// -------- Step 1: user sends intent → contradiction ack + status check --------
+async function onIntentSent() {
+  addUserMessage(INTENT_TEXT);
+  log('entry', 'seekHelp intent sent', false);
+  setNetStatus('जाँच रहे हैं…');
+
+  await wait(700);
+  await showTyping(1200);
+
+  // FIX 1a — acknowledge contradiction (recharge is active but user reports downtime)
+  addWiomMessage(
+    'अरे, आपका रिचार्ज तो <b>28 दिसंबर तक चालू</b> है — फिर भी दिक्कत आ रही है? चलिए तुरंत जाँचते हैं।'
+  );
+
+  await wait(800);
+  await showTyping(1400);
+
+  // FIX 1b — system status check (rules in/out account-side issues for the user)
+  addStatusCheckMixed([
+    { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
+    { ok: true, text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' },
+    { ok: true, text: 'हमारे सर्वर तक connection ठीक है' }
+  ]);
+  log('STATUS_CHECK', 'recharge ✓ wifi ✓ server ✓', true);
+
+  await wait(1100);
+  await showTyping(1000);
+
+  addWiomMessage('हमारे end पर सब सही दिख रहा है — तो दिक्कत आपके मोबाइल फ़ोन या नेट बॉक्स के आसपास हो सकती है।\n\nये बताइए — आपकी समस्या क्या है?', {
+    cta: [
+      { label: 'नेट नहीं चल रहा',           onClick: () => onPickIssue('not_working',  'नेट नहीं चल रहा') },
+      { label: 'नेट रुक रुक कर चल रहा है', onClick: () => onPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
+    ]
+  });
+  log('ASK_ISSUE', 'awaiting 2-option pick', false);
+}
+
+// -------- Step 2: user picks issue → instructions + "हो गया, चेक करें" CTA --------
+async function onPickIssue(key, label) {
+  addUserMessage(label, 'आपकी समस्या क्या है?');
+  log('ASK_ISSUE', `→ "${label}"`, false);
+
+  await wait(700);
+  await showTyping(1400);
+
+  addWiomMessage(
+    'समस्या समझ गए। एक बार ये करके देखें — अक्सर इन्हीं से नेट वापस आ जाता है:\n\n' +
+    '<b>1.</b> चेक करें कि आप सही <b>नेट सिग्नल</b> (Wiom Ramesh 1234) से जुड़े हैं\n' +
+    '<b>2.</b> अपने <b>नेट बॉक्स</b> को रीस्टार्ट करें — तार निकालें, <b>30 सेकंड</b> रुकें, तार वापस लगाएं\n' +
+    '<b>3.</b> नेट बॉक्स की लाइटें स्थिर होने पर, अपने <b>मोबाइल फ़ोन</b> को नेट से <b>दोबारा कनेक्ट</b> करें\n\n' +
+    'सब करने के बाद नीचे का बटन दबाएं।',
+    {
+      media: true,
+      cta: [
+        { label: 'हो गया, अब चेक करते हैं', onClick: () => onStepsDone(key, label) }
+      ]
+    }
+  );
+  log('INSTRUCTIONS', 'awaiting steps-done tap', false);
+}
+
+// -------- FIX 2: recheck gate — "क्या अब नेट सही चल रहा है?" --------
+async function onStepsDone(key, label) {
+  addUserMessage('हो गया, अब चेक करते हैं', 'सब करने के बाद नीचे का बटन दबाएं।');
+  log('STEPS_DONE', 'user reports steps done', false);
+
+  await wait(700);
+  await showTyping(1100);
+
+  addWiomWithSideBySide('क्या अब आपका नेट सही चल रहा है?', [
+    { label: 'हाँ',  onClick: () => onRecheck(true,  key, label) },
+    { label: 'नहीं', onClick: () => onRecheck(false, key, label) }
+  ]);
+  log('RECHECK', 'awaiting हाँ/नहीं', false);
+}
+
+async function onRecheck(isYes, key, label) {
+  if (isYes) {
+    addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
+    log('RECHECK', '→ self-resolved', false);
+    setNetStatus('चालू है');
+
+    await wait(700);
+    await showTyping(900);
+    addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं — हम तुरंत मदद करेंगे।');
+    log('COMPLETED', 'flow ended (self-resolved, NO ticket)', false);
+
+    await wait(600);
+    addRestartCard();
+    return;
+  }
+
+  addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
+  log('RECHECK', '→ unresolved, proceed to ticket', false);
+
+  await wait(700);
+  await showTyping(1200);
+
+  addWiomMessage(
+    'ठीक है — अब हम partner team को भेजते हैं। एक tap में टिकट बन जाएगा।\n\n<b>SLA:</b> 4 घंटे के अंदर समाधान।',
+    {
+      cta: [
+        { label: 'शिकायत दर्ज करें', onClick: () => onRaiseComplaint(key, label) }
+      ]
+    }
+  );
+  log('TICKET_OFFER', 'awaiting raise-complaint tap', false);
+}
+
+// -------- Step 3: create ticket → engineer assignment → resolution check (FIX 3) --------
+async function onRaiseComplaint(key, label) {
+  addUserMessage('शिकायत दर्ज करें', 'एक tap में टिकट बन जाएगा।');
+  log('RAISE_COMPLAINT', `→ ${label}`, false);
+
+  await wait(700);
+  await showTyping(1400);
+
+  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
+  setNetStatus(`जाँच चल रही है · #${ticketId}`);
+
+  addWiomMessage(
+    `<b>टिकट दर्ज हो गया।</b>\n\n<b>समस्या:</b> ${label}\n<b>टिकट ID:</b> ${ticketId}\n<b>SLA:</b> 4 घंटे के अंदर समाधान`
+  );
+  log('TICKET', `${ticketId} — ${PROBLEM_META[key]}`, true);
+
+  // ---- Engineer assignment (auto-advances) ----
+  await wait(1500);
+  await showTyping(1200);
+  addWiomMessage('आपके इलाके के <b>नेट इंजीनियर</b> तय हो गए हैं।');
+  await wait(400);
+  addEngineerCard({ name: 'रोहित कुमार', role: 'नेट इंजीनियर · आपका इलाका' });
+  log('ENGINEER_ASSIGNED', 'रोहित कुमार', true);
+  setNetStatus(`इंजीनियर तय हो गया · #${ticketId}`);
+
+  await wait(1600);
+  await showTyping(1100);
+  addWiomMessage('रोहित जी आपके इलाके में काम शुरू कर चुके हैं। <b>शाम 6 बजे तक</b> समाधान हो जाएगा।\n\nजैसे ही नेट वापस आए, यहीं चैट में बताइए।');
+  log('ENGINEER_WORKING', 'in-progress', true);
+
+  // ---- Resolution check (closes the loop on user's *actual* objective) ----
+  await wait(2200);
+  await showTyping(1400);
+  addWiomMessage('एक update — रोहित जी ने अपना काम पूरा कर लिया है।');
+  setNetStatus('समाधान confirm होना बाकी');
+
+  await wait(700);
+  await showTyping(1000);
+  addWiomWithSideBySide('क्या अब आपका नेट सही चल रहा है?', [
+    { label: 'हाँ, चल रहा है',     onClick: () => onResolutionConfirm(true,  ticketId) },
+    { label: 'नहीं, अभी भी दिक्कत', onClick: () => onResolutionConfirm(false, ticketId) }
+  ]);
+  log('RESOLUTION_CHECK', 'awaiting final हाँ/नहीं', false);
+}
+
+async function onResolutionConfirm(isResolved, ticketId) {
+  if (isResolved) {
+    addUserMessage('हाँ, चल रहा है', 'क्या अब आपका नेट सही चल रहा है?');
+    log('RESOLUTION', `${ticketId} → resolved`, false);
+    setNetStatus('चालू है');
+
+    await wait(700);
+    await showTyping(800);
+    addWiomMessage(`<b>टिकट #${ticketId} बंद कर दिया गया।</b>\n\nध्यान देने के लिए धन्यवाद। 🙏\n\nआगे कोई दिक्कत हो तो यहीं बताएं।`);
+    log('COMPLETED', 'ticket resolved + closed', false);
+
+    await wait(600);
+    addRestartCard();
+    return;
+  }
+
+  addUserMessage('नहीं, अभी भी दिक्कत', 'क्या अब आपका नेट सही चल रहा है?');
+  log('RESOLUTION', `${ticketId} → reopened`, false);
+  setNetStatus(`दोबारा जाँच · #${ticketId}`);
+
+  await wait(700);
+  await showTyping(1100);
+  addWiomMessage(`<b>टिकट #${ticketId} फिर से खोल दिया गया है।</b>\n\nरोहित जी को वापस भेज रहे हैं — वे फिर से देखेंगे। अगले update का इंतज़ार करें।`);
+  log('COMPLETED', 'ticket reopened', false);
+
+  await wait(600);
+  addRestartCard();
+}
+
+// ============ SCENARIO PICKER ============
+
+const SCENARIOS = {
+  resolution: runOutageFlow
+};
+let currentScenario = 'resolution';
+
+function setScenario(name) {
+  currentScenario = name;
+  document.querySelectorAll('.scenario-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.scenario === name);
+  });
+  restart();
+}
+
+function restart() {
+  messages.innerHTML = '';
+  logEntries.innerHTML = '';
+  lastSender = null;
+  resetInputState();
+  SCENARIOS[currentScenario]();
+}
+
+// ============ INPUT FIELD + KEYBOARD WIRING ============
+
+const inputField = document.getElementById('inputField');
+const sendBtnEl  = document.getElementById('sendBtn');
+const keyboardEl = document.getElementById('keyboard');
+let keyboardOpen = false;
+let intentTyped = false;
+let intentSent  = false;
+
+function openKeyboard() {
+  if (keyboardOpen || intentSent) return;
+  keyboardOpen = true;
+  keyboardEl.classList.add('open');
+
+  // Animate intent text appearing with blinking caret
+  inputField.classList.remove('placeholder');
+  inputField.classList.add('typed');
+  inputField.innerHTML = `${INTENT_TEXT}<span class="caret"></span>`;
+  intentTyped = true;
+  sendBtnEl.classList.add('armed');
+  scrollToEnd();
+}
+
+function closeKeyboard() {
+  keyboardOpen = false;
+  keyboardEl.classList.remove('open');
+}
+
+function sendIntent() {
+  if (intentSent || !intentTyped) return;
+  intentSent = true;
+
+  // Reset the input visually
+  inputField.innerHTML = 'यहाँ पूछें....';
+  inputField.classList.remove('typed');
+  inputField.classList.add('placeholder');
+  sendBtnEl.classList.remove('armed');
+  closeKeyboard();
+
+  // Hand off to the existing flow
+  onIntentSent();
+}
+
+function resetInputState() {
+  keyboardOpen = false;
+  intentTyped  = false;
+  intentSent   = false;
+  inputField.innerHTML = 'यहाँ पूछें....';
+  inputField.classList.remove('typed');
+  inputField.classList.add('placeholder');
+  sendBtnEl.classList.remove('armed');
+  keyboardEl.classList.remove('open');
+}
+
+inputField.addEventListener('click', openKeyboard);
+sendBtnEl.addEventListener('click', sendIntent);
+
+// ============ CONTEXT + SCENARIO SCREENS ============
+
+const contextScreen   = document.getElementById('contextScreen');
+const scenarioScreen  = document.getElementById('scenarioScreen');
+const contextNextBtn  = document.getElementById('contextNextBtn');
+
+function showScenarios() {
+  contextScreen.classList.add('hidden');
+  scenarioScreen.classList.remove('queued');
+}
+
+function showContext() {
+  contextScreen.classList.remove('hidden');
+  scenarioScreen.classList.add('queued');
+}
+
+function pickScenario(caseName) {
+  // hide yellow screens, set scenario, restart chat
+  contextScreen.classList.add('hidden');
+  scenarioScreen.classList.add('hidden');
+  setScenario(caseName);
+}
+
+contextNextBtn.addEventListener('click', showScenarios);
+document.getElementById('scenario1Card').addEventListener('click', () => pickScenario('resolution'));
+
+// Override the end-of-chat restart card behavior:
+// instead of re-running the same scenario, return to the scenario chooser.
+const _originalAddRestartCard = addRestartCard;
+window.addRestartCard = function() {
+  const card = document.createElement('div');
+  card.className = 'restart-card bubble-enter';
+  card.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 12a8 8 0 0 1 13.66-5.66M20 4v5h-5M20 12a8 8 0 0 1-13.66 5.66M4 20v-5h5" stroke="#3f3249" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>Restart flow</span>
+  `;
+  card.onclick = () => {
+    messages.innerHTML = '';
+    logEntries.innerHTML = '';
+    lastSender = null;
+    resetInputState();
+    scenarioScreen.classList.remove('hidden', 'queued');
+  };
+  messages.appendChild(card);
+  scrollToEnd();
+};
+
+// Do NOT auto-start chat — context screen is shown by default.
+
+// ============ TAPPABLE-AREA HINT (Figma-style) ============
+// When user taps an empty area of the phone, briefly pulse the currently-
+// active hotspots so they know where to tap.
+
+const HOTSPOT_SELECTOR = [
+  '.btn-yellow-cta',
+  '.scenario-card',
+  '.cta-link:not(.consumed):not(.cta-disabled)',
+  '.cta-cell:not(.consumed)',
+  '.restart-card',
+  '#inputField',
+  '#sendBtn.armed',
+  '.kb-key'
+].join(', ');
+
+const phoneEl = document.querySelector('.phone');
+phoneEl.addEventListener('click', (e) => {
+  if (e.target.closest(HOTSPOT_SELECTOR)) return;
+  showHotspotHints();
+});
+
+function showHotspotHints() {
+  let targets = [];
+
+  const contextVisible  = !contextScreen.classList.contains('hidden');
+  const scenarioVisible = !scenarioScreen.classList.contains('queued')
+                       && !scenarioScreen.classList.contains('hidden');
+
+  if (contextVisible) {
+    targets = [contextNextBtn];
+  } else if (scenarioVisible) {
+    targets = Array.from(document.querySelectorAll('.scenario-card'));
+  } else {
+    // Chat is visible — prefer restart card; else latest active CTAs; else input/send hint
+    const restartCard = messages.querySelector('.restart-card');
+    if (restartCard) {
+      targets = [restartCard];
+    } else {
+      const activeCtas = messages.querySelectorAll('.cta-link:not(.consumed):not(.cta-disabled), .cta-cell:not(.consumed)');
+      if (activeCtas.length) {
+        const latestBubble = activeCtas[activeCtas.length - 1].closest('.bubble');
+        if (latestBubble) {
+          targets = Array.from(latestBubble.querySelectorAll('.cta-link:not(.consumed):not(.cta-disabled), .cta-cell:not(.consumed)'));
+        }
+      } else if (!intentSent) {
+        // No active CTAs and intent not yet sent — point to input or send button
+        targets = intentTyped ? [sendBtnEl] : [inputField];
+      }
+    }
+  }
+
+  targets.forEach(el => {
+    el.classList.add('hint-pulse');
+    setTimeout(() => el.classList.remove('hint-pulse'), 1700);
+  });
+}
+</script>
+</body>
+</html>
