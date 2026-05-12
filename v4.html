@@ -1617,154 +1617,9 @@ async function onPickIssue(key, label) {
     `आपको दोबारा बताने की ज़रूरत नहीं पड़ेगी — हमारी टीम पहले से ही लग गई है।`
   );
   log('TICKET', `instant #${ticketId} — ${PROBLEM_META[key]}`, true);
+  log('COMPLETED', 'ticket registered', false);
 
-  // Auto-advance to Step 5 · Live progress
-  setTimeout(() => progressChain(), 2200);
-}
-
-// Live progress + delay recovery + work-done + resolution check
-async function progressChain() {
-  // Stage: team assigned
-  activeComplaint.stage = 'team_assigned';
-  setNetStatus('टीम काम कर रही है');
-  showTicketLine(activeComplaint.team, '20 मिनट');
-
-  await showTyping(1200);
-  addWiomMessage('<b>रमेश नेटवर्क टीम</b> को आपका टिकट दे दिया गया है।');
-  await wait(400);
-  addEngineerCard({ name: 'रमेश नेटवर्क टीम', role: 'आपके इलाके के नेट इंजीनियर' });
-  log('PROGRESS', 'team assigned', true);
-
-  // Stage: on-site
-  await wait(2100);
-  activeComplaint.stage = 'on_site';
-  showTicketLine(activeComplaint.team, '15 मिनट');
-  await showTyping(1100);
-  addWiomMessage('टीम ने आपके इलाके में देखना शुरू कर दिया है।');
-  log('PROGRESS', 'on-site', true);
-
-  // Stage: investigating
-  await wait(2200);
-  activeComplaint.stage = 'investigating';
-  showTicketLine(activeComplaint.team, '10 मिनट');
-  await showTyping(1200);
-  addWiomMessage('लाइन में एक छोटी दिक्कत मिली है — अभी ठीक कर रहे हैं।');
-  log('PROGRESS', 'investigating', true);
-
-  // Stage: DELAY RECOVERY (demonstrated for prototype)
-  await wait(2400);
-  activeComplaint.stage = 'delayed';
-  setNetStatus('priority पर ले लिया है');
-  showTicketLine(activeComplaint.team, '+5 मिनट');
-  await showTyping(1200);
-  addWiomMessage(
-    'देरी के लिए माफ़ कीजिए — काम थोड़ा बड़ा निकला। हमने इसे <b>priority</b> पर भेज दिया है, बस थोड़ी ही देर और।'
-  );
-  log('PROGRESS', 'delay recovery shown', true);
-
-  // Stage: work done
-  await wait(2300);
-  activeComplaint.stage = 'work_done';
-  setNetStatus('समाधान confirm होना बाकी');
-  showTicketLine(activeComplaint.team, 'काम पूरा');
-  await showTyping(1200);
-  addWiomMessage('टीम का काम पूरा हो गया है। एक बार चेक कर के बताइए —');
-  log('PROGRESS', 'work done', true);
-
-  // Resolution check
-  await wait(500);
-  addWiomWithSideBySide('नेट अब ठीक चल रहा है?', [
-    { label: 'हाँ ठीक है',   onClick: () => onResolutionConfirm(true) },
-    { label: 'अभी भी नहीं',  onClick: () => onResolutionConfirm(false) }
-  ]);
-  log('RESOLUTION_CHECK', 'awaiting हाँ/नहीं', false);
-}
-
-async function onResolutionConfirm(isResolved) {
-  if (isResolved) {
-    addUserMessage('हाँ ठीक है', 'नेट अब ठीक चल रहा है?');
-    activeComplaint.stage = 'resolved';
-    setNetStatus('चालू है');
-    hideTicketLine();
-
-    await wait(700);
-    await showTyping(900);
-    addWiomMessage(
-      `<b>समाधान हो गया।</b> 🎉\n\n` +
-      `टिकट #${activeComplaint.id} बंद कर दिया गया है।\n\n` +
-      `आगे कोई भी दिक्कत हो — यहीं बताइए, हम तुरंत देखेंगे।`
-    );
-    log('COMPLETED', `${activeComplaint.id} → resolved + closed`, false);
-
-    activeComplaint = null;
-    await wait(600);
-    addRestartCard();
-    return;
-  }
-
-  // Not resolved → reopen + senior intervention
-  addUserMessage('अभी भी नहीं', 'नेट अब ठीक चल रहा है?');
-  activeComplaint.stage = 'reopened';
-  setNetStatus('दोबारा देख रहे हैं');
-  showTicketLine(activeComplaint.team, '10 मिनट');
-
-  await wait(700);
-  await showTyping(1100);
-  addWiomMessage(
-    'माफ़ कीजिए — टीम को वापस भेज रहे हैं। पहले से ज़्यादा ध्यान देंगे। <b>10 मिनट</b> में update देंगे।'
-  );
-  log('REOPENED', `${activeComplaint.id} → back to team`, false);
-
-  await wait(2200);
-  showTicketLine(activeComplaint.team, '5 मिनट');
-  await showTyping(1200);
-  addWiomMessage('रमेश जी फिर से देख रहे हैं — बस थोड़ी ही देर।');
-
-  await wait(2300);
-  setNetStatus('समाधान confirm होना बाकी');
-  showTicketLine(activeComplaint.team, 'काम पूरा');
-  await showTyping(1200);
-  addWiomMessage('अब काम पूरा हो गया है। एक बार और देख लीजिए।');
-
-  await wait(500);
-  addWiomWithSideBySide('अब नेट चल रहा है?', [
-    { label: 'हाँ चल रहा है', onClick: () => onFinalConfirm(true) },
-    { label: 'अभी भी नहीं',    onClick: () => onFinalConfirm(false) }
-  ]);
-  log('RESOLUTION_CHECK_2', 'awaiting final हाँ/नहीं', false);
-}
-
-async function onFinalConfirm(isResolved) {
-  if (isResolved) {
-    addUserMessage('हाँ चल रहा है', 'अब नेट चल रहा है?');
-    setNetStatus('चालू है');
-    hideTicketLine();
-
-    await wait(700);
-    await showTyping(800);
-    addWiomMessage(
-      `<b>समाधान हो गया।</b> 🙏\n\n` +
-      `टिकट #${activeComplaint.id} बंद। ध्यान देने के लिए धन्यवाद।`
-    );
-    log('COMPLETED', `${activeComplaint.id} → resolved (final)`, false);
-    activeComplaint = null;
-
-    await wait(600);
-    addRestartCard();
-    return;
-  }
-
-  addUserMessage('अभी भी नहीं', 'अब नेट चल रहा है?');
-  setNetStatus('senior team देख रही है');
-  await wait(700);
-  await showTyping(1200);
-  addWiomMessage(
-    `माफ़ी चाहते हैं। अब एक <b>बड़े इंजीनियर</b> आपसे खुद बात करेंगे — कुछ ही मिनटों में फ़ोन आएगा।\n\n` +
-    `टिकट #${activeComplaint.id} खुला है, हम लगे हैं।`
-  );
-  log('ESCALATED', `${activeComplaint.id} → senior`, false);
-
-  await wait(600);
+  await wait(800);
   addRestartCard();
 }
 
@@ -1801,32 +1656,11 @@ async function runContinuityFlow() {
     `<b>स्थिति:</b> ${activeComplaint.status}\n\n` +
     `आपको कुछ और करने की ज़रूरत नहीं — हम update करते रहेंगे।`
   );
-  log('CONTINUITY', `resumed #${activeComplaint.id}`, false);
+  log('CONTINUITY', `shown #${activeComplaint.id}`, false);
+  log('COMPLETED', 'continuity surfaced', false);
 
-  await wait(900);
-  await showTyping(1100);
-  addWiomMessage('एक update — टीम ने लाइन की दिक्कत ढूँढ ली है, अब ठीक कर रहे हैं।');
-  showTicketLine(activeComplaint.team, '8 मिनट');
-
-  await wait(2400);
-  setNetStatus('priority पर है');
-  showTicketLine(activeComplaint.team, '+5 मिनट');
-  await showTyping(1100);
-  addWiomMessage('देरी के लिए माफ़ कीजिए — इसे <b>priority</b> पर ले लिया है। बस थोड़ी देर और।');
-  log('PROGRESS', 'delay recovery (continuity)', true);
-
-  await wait(2400);
-  setNetStatus('समाधान confirm होना बाकी');
-  showTicketLine(activeComplaint.team, 'काम पूरा');
-  await showTyping(1200);
-  addWiomMessage('टीम का काम पूरा हो गया है। एक बार चेक कर के बताइए —');
-
-  await wait(500);
-  addWiomWithSideBySide('नेट अब ठीक चल रहा है?', [
-    { label: 'हाँ ठीक है',   onClick: () => onResolutionConfirm(true) },
-    { label: 'अभी भी नहीं',  onClick: () => onResolutionConfirm(false) }
-  ]);
-  log('RESOLUTION_CHECK', 'continuity → awaiting हाँ/नहीं', false);
+  await wait(800);
+  addRestartCard();
 }
 
 // ============ SCENARIO PICKER ============
