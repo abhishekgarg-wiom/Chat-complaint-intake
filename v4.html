@@ -1128,7 +1128,7 @@ body {
         <div class="ticket-line hidden" id="ticketLine">
           <span class="label">टीम: </span><span id="teamName">—</span>
           <span class="dot-sep">·</span>
-          <span class="label">ETA: </span><span id="ticketEta">—</span>
+          <span id="ticketEta">—</span>
         </div>
       </div>
     </div>
@@ -1595,13 +1595,13 @@ async function onPickIssue(key, label) {
   await wait(1400);
   await showTyping(1300);
 
-  // ----- Step 3 · Instant complaint registration + Step 4 · Ownership/ETA -----
+  // ----- Step 3 · Instant complaint registration + Step 4 · Ownership/Resolution time -----
   const ticketId = String(Math.floor(600000 + Math.random() * 99999));
   activeComplaint = {
     id: ticketId,
     problem: label,
     team: 'रमेश नेटवर्क टीम',
-    eta: '25 मिनट',
+    eta: '13 दिसं, 5pm तक',
     status: 'शिकायत दर्ज हो गई',
     stage: 'registered'
   };
@@ -1613,8 +1613,13 @@ async function onPickIssue(key, label) {
     `<b>टिकट:</b> #${ticketId}\n` +
     `<b>समस्या:</b> ${label}\n` +
     `<b>टीम:</b> रमेश नेटवर्क टीम\n` +
-    `<b>ETA:</b> 25 मिनट\n\n` +
-    `आपको दोबारा बताने की ज़रूरत नहीं पड़ेगी — हमारी टीम पहले से ही लग गई है।`
+    `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
+    `आपको दोबारा बताने की ज़रूरत नहीं पड़ेगी — हमारी टीम पहले से ही लग गई है।`,
+    {
+      cta: [
+        { label: 'इंजीनियर को कॉल करें', onClick: () => { window.open('tel:9876543210'); } }
+      ]
+    }
   );
   log('TICKET', `instant #${ticketId} — ${PROBLEM_META[key]}`, true);
   log('COMPLETED', 'ticket registered', false);
@@ -1632,7 +1637,7 @@ async function runContinuityFlow() {
     id: '612345',
     problem: 'नेट नहीं चल रहा',
     team: 'रमेश नेटवर्क टीम',
-    eta: '12 मिनट',
+    eta: '13 दिसं, 5pm तक',
     status: 'टीम काम कर रही है',
     stage: 'in_progress'
   };
@@ -1653,8 +1658,14 @@ async function runContinuityFlow() {
     `<b>टिकट:</b> #${activeComplaint.id}\n` +
     `<b>समस्या:</b> ${activeComplaint.problem}\n` +
     `<b>टीम:</b> ${activeComplaint.team}\n` +
-    `<b>स्थिति:</b> ${activeComplaint.status}\n\n` +
-    `आपको कुछ और करने की ज़रूरत नहीं — हम update करते रहेंगे।`
+    `<b>स्थिति:</b> ${activeComplaint.status}\n` +
+    `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
+    `आपको कुछ और करने की ज़रूरत नहीं — हम update करते रहेंगे।`,
+    {
+      cta: [
+        { label: 'इंजीनियर को कॉल करें', onClick: () => { window.open('tel:9876543210'); } }
+      ]
+    }
   );
   log('CONTINUITY', `shown #${activeComplaint.id}`, false);
   log('COMPLETED', 'continuity surfaced', false);
