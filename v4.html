@@ -578,6 +578,15 @@ body {
   text-align: center;
   margin-top: -12px;
 }
+.scenario-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #565656;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 4px 0;
+  margin-top: 4px;
+}
 .scenario-card {
   background: #FFFFFF;
   border-radius: 16px;
@@ -1060,19 +1069,65 @@ body {
   <!-- ============ SCENARIO CHOOSER ============ -->
   <section class="yellow-screen queued" id="scenarioScreen">
     <div class="scenario-content">
-      <div class="scenario-title">v4 — Resolution journey</div>
-      <div class="scenario-subtitle">complaint <b>intake</b> नहीं — <b>resolution</b> तक चैट साथ चलती है।</div>
+      <div class="scenario-title">v4 — Complaint intake flow</div>
+      <div class="scenario-subtitle">Default flows + PRD edge cases · हर scenario अलग path दिखाती है।</div>
 
+      <div class="scenario-group-label">Default flows</div>
       <div class="scenario-card" id="scenario1Card" data-case="fresh">
         <div class="scenario-card-num">Case 1 · नई शिकायत</div>
         <div class="scenario-card-title">पहली बार चैट खोली है</div>
-        <div class="scenario-card-desc">User types "मेरा नेट नहीं चल रहा" → system status check → issue pick → <b>शिकायत तुरंत दर्ज</b> + ETA + supportive self-help → team assigned (engineer card) → live progress → delay recovery → resolution confirm (हाँ / अभी भी नहीं)। Reopen handled भी है।</div>
+        <div class="scenario-card-desc">User types "मेरा नेट नहीं चल रहा" → status check → issue pick → troubleshoot → recheck gate (हाँ/नहीं) → "नहीं" पर ticket बनता है (call CTA + 13 दिसंबर date)।</div>
       </div>
 
       <div class="scenario-card" id="scenario2Card" data-case="continuity">
         <div class="scenario-card-num">Case 2 · वापस आए हैं</div>
         <div class="scenario-card-title">पहले से active शिकायत है</div>
-        <div class="scenario-card-desc">User चैट दोबारा खोलते हैं — कोई फिर से नहीं पूछता। Active complaint summary upfront, live status sticky-bar, और auto-progress बीच से उठाता है। *आपको दोबारा बताने की ज़रूरत नहीं* का proof।</div>
+        <div class="scenario-card-desc">User चैट दोबारा खोलते हैं — Active complaint summary upfront, live status sticky-bar। *आपको दोबारा बताने की ज़रूरत नहीं* का proof।</div>
+      </div>
+
+      <div class="scenario-group-label">Dedup checks · Steps B–C</div>
+      <div class="scenario-card" id="scenario3Card" data-case="open_ticket">
+        <div class="scenario-card-num">Case 3 · Step B</div>
+        <div class="scenario-card-title">पहले से शिकायत खुली है</div>
+        <div class="scenario-card-desc">Bot को open ticket मिलता है। पूछता है "वही समस्या या अलग?" — वही पर मौजूदा ticket में update जोड़ी जाती है, अलग पर fresh flow।</div>
+      </div>
+
+      <div class="scenario-card" id="scenario4Card" data-case="resolved_reopen">
+        <div class="scenario-card-num">Case 4 · Step C</div>
+        <div class="scenario-card-title">कल हल हुई थी, फिर लौटी</div>
+        <div class="scenario-card-desc">पिछले 48 घंटे में resolved ticket मिला। Bot पूछता है "क्या वही दिक्कत वापस आई?" — हाँ पर वही ticket reopen होता है (पुरानी टीम)।</div>
+      </div>
+
+      <div class="scenario-group-label">Diagnostics · Steps A, D</div>
+      <div class="scenario-card" id="scenario5Card" data-case="ping_fail">
+        <div class="scenario-card-num">Case 5 · Step D fail</div>
+        <div class="scenario-card-title">इलाके में outage है</div>
+        <div class="scenario-card-desc">NAS ping FAIL — नेट बॉक्स unreachable। Bot troubleshoot skip करता है (restart से फायदा नहीं) और तुरंत <b>INTERNET SUPPLY DOWN</b> (Type 3, 4hr) ticket बना देता है।</div>
+      </div>
+
+      <div class="scenario-card" id="scenario6Card" data-case="inactive_plan">
+        <div class="scenario-card-num">Case 6 · Step A</div>
+        <div class="scenario-card-title">रिचार्ज खत्म है</div>
+        <div class="scenario-card-desc">INACTIVE plan। शिकायत flow शुरू नहीं होती — Bot सीधे रिचार्ज prompt भेजता है, क्योंकि बिना plan के नेट नहीं चलेगा।</div>
+      </div>
+
+      <div class="scenario-group-label">Selection & errors · Steps F, G</div>
+      <div class="scenario-card" id="scenario7Card" data-case="category_picker">
+        <div class="scenario-card-num">Case 7 · Step F</div>
+        <div class="scenario-card-title">Category picker</div>
+        <div class="scenario-card-desc">Troubleshoot fail होने पर — 4 categories (नेट बंद / Slow / Signal / कुछ और) के suggestion chips, फिर subtype चुनना। उसके हिसाब से Type 3/Type 4 ticket बनता है, सही queue (PARTNER/CX) पर route।</div>
+      </div>
+
+      <div class="scenario-card" id="scenario8Card" data-case="api_error">
+        <div class="scenario-card-num">Case 8 · Step G error</div>
+        <div class="scenario-card-title">Ticket नहीं बन पाया</div>
+        <div class="scenario-card-desc">Kapture API down है। Bot retry करता है, फिर fallback: "हमारी टीम को सीधे कॉल करें" — phone number दिखाता है। कोई dead-end "Call us" नहीं — पूरा context + apology।</div>
+      </div>
+
+      <div class="scenario-card" id="scenario9Card" data-case="angry_user">
+        <div class="scenario-card-num">Case 9 · Sentiment</div>
+        <div class="scenario-card-title">गुस्से में user — fast-track</div>
+        <div class="scenario-card-desc">Sentiment detection: frustrated language पकड़कर bot middle steps skip करता है। Empathic apology + तुरंत <b>HIGH priority</b> ticket (1 घंटे में समाधान)।</div>
       </div>
     </div>
     <div class="context-cta-wrap"></div>
@@ -1516,14 +1571,9 @@ function addStatusCheckMixed(items) {
 }
 
 // ============================================================================
-// CASE 1 — Fresh complaint
+// Shared seed helpers
 // ============================================================================
-async function runFreshFlow() {
-  activeComplaint = null;
-  setNetStatus('चालू है');
-  hideTicketLine();
-
-  // Seed prev-chat history (recharge)
+function seedRechargeHistory() {
   addPrevChatCard('पिछली चैट का इतिहास');
 
   const offerBubble = addWiomMessage(
@@ -1541,12 +1591,105 @@ async function runFreshFlow() {
   addWiomMessage(
     'आपका <b>2 दिन</b> का रिचार्ज सफल रहा!\nआपका नेट <b>28 दिसंबर, 5:15 pm</b> तक बिना रुकावट के चालू रहेगा।'
   );
+}
 
+function seedExpiredHistory() {
+  addPrevChatCard('पिछली चैट का इतिहास');
+
+  addWiomMessage(
+    'आपका <b>₹150</b> का 2-दिन का प्लान <b>5 दिसंबर, 5:00 pm</b> को खत्म हो गया है।\n\nनेट दोबारा चलाने के लिए रिचार्ज ज़रूरी है।'
+  );
+}
+
+// ============================================================================
+// CASE 1 — Fresh complaint (default flow)
+// ============================================================================
+async function runFreshFlow() {
+  activeComplaint = null;
+  setNetStatus('चालू है');
+  hideTicketLine();
+  seedRechargeHistory();
   log('entry', 'fresh — awaiting user intent', false);
 }
 
-// User sends typed intent → contradiction ack → status check → issue pick
+// ============================================================================
+// PRD edge case flows — setup (waits for typed intent, then dispatches)
+// ============================================================================
+async function runOpenTicketFlow() {
+  activeComplaint = null;
+  setNetStatus('चालू है');
+  hideTicketLine();
+  seedRechargeHistory();
+  log('entry', 'open_ticket — awaiting intent', false);
+}
+
+async function runResolvedReopenFlow() {
+  activeComplaint = null;
+  setNetStatus('चालू है');
+  hideTicketLine();
+  seedRechargeHistory();
+  log('entry', 'resolved_reopen — awaiting intent', false);
+}
+
+async function runPingFailFlow() {
+  activeComplaint = null;
+  setNetStatus('चालू है');
+  hideTicketLine();
+  seedRechargeHistory();
+  log('entry', 'ping_fail — awaiting intent', false);
+}
+
+async function runInactivePlanFlow() {
+  activeComplaint = null;
+  setNetStatus('रिचार्ज ज़रूरी है');
+  hideTicketLine();
+  seedExpiredHistory();
+  log('entry', 'inactive_plan — awaiting intent', false);
+}
+
+async function runCategoryPickerFlow() {
+  activeComplaint = null;
+  setNetStatus('चालू है');
+  hideTicketLine();
+  seedRechargeHistory();
+  log('entry', 'category_picker — awaiting intent', false);
+}
+
+async function runApiErrorFlow() {
+  activeComplaint = null;
+  setNetStatus('चालू है');
+  hideTicketLine();
+  seedRechargeHistory();
+  log('entry', 'api_error — awaiting intent', false);
+}
+
+async function runAngryUserFlow() {
+  activeComplaint = null;
+  setNetStatus('चालू है');
+  hideTicketLine();
+  seedRechargeHistory();
+  log('entry', 'angry_user — awaiting intent', false);
+}
+
+// ============================================================================
+// onIntentSent — dispatch by scenario
+// ============================================================================
 async function onIntentSent() {
+  switch (currentScenario) {
+    case 'fresh':           return freshAfterIntent();
+    case 'open_ticket':     return openTicketAfterIntent();
+    case 'resolved_reopen': return resolvedReopenAfterIntent();
+    case 'ping_fail':       return pingFailAfterIntent();
+    case 'inactive_plan':   return inactivePlanAfterIntent();
+    case 'category_picker': return freshAfterIntent();   // diverts at onRecheck(false)
+    case 'api_error':       return freshAfterIntent();   // diverts at onRecheck(false)
+    case 'angry_user':      return angryUserAfterIntent();
+    default:                return freshAfterIntent();
+  }
+}
+
+// ----- Default (Case 1) — contradiction ack + status check + issue pick -----
+async function freshAfterIntent() {
   addUserMessage(INTENT_TEXT);
   log('entry', 'intent sent', false);
   setNetStatus('जाँच रहे हैं…');
@@ -1575,7 +1718,7 @@ async function onIntentSent() {
   log('ASK_ISSUE', 'awaiting 2-option pick', false);
 }
 
-// Issue picked → troubleshoot with done-CTA → recheck gate → (resolved | ticket)
+// ----- Issue picked → troubleshoot with done-CTA -----
 async function onPickIssue(key, label) {
   addUserMessage(label, 'दिक्कत क्या है?');
   log('ASK_ISSUE', `→ ${label}`, false);
@@ -1583,7 +1726,6 @@ async function onPickIssue(key, label) {
   await wait(700);
   await showTyping(1300);
 
-  // ----- Step 2 · Troubleshoot with "हो गया" CTA -----
   addWiomMessage(
     'समझ गए। पहले ये जल्दी से कर लें — कई बार इन्हीं से नेट चल जाता है:\n\n' +
     '<b>1.</b> देखें कि आप सही Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं\n' +
@@ -1600,7 +1742,7 @@ async function onPickIssue(key, label) {
   log('INSTRUCTIONS', 'awaiting steps-done tap', false);
 }
 
-// ----- Step 3 · Recheck gate -----
+// ----- Recheck gate -----
 async function onStepsDone(key, label) {
   addUserMessage('हो गया, अब चेक करते हैं', 'सब करने के बाद नीचे का बटन दबाएं।');
   log('STEPS_DONE', 'user reports steps done', false);
@@ -1631,10 +1773,19 @@ async function onRecheck(isYes, key, label) {
     return;
   }
 
-  // नहीं → create ticket
   addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
-  log('RECHECK', '→ unresolved, creating ticket', false);
+  log('RECHECK', '→ unresolved', false);
 
+  // Case 7 — divert to category picker
+  if (currentScenario === 'category_picker') {
+    return showCategoryPicker(key, label);
+  }
+  // Case 8 — simulate ticket creation failure
+  if (currentScenario === 'api_error') {
+    return simulateApiError(key, label);
+  }
+
+  // Default (Case 1) — create ticket immediately
   await wait(700);
   await showTyping(1300);
 
@@ -1665,6 +1816,433 @@ async function onRecheck(isYes, key, label) {
   );
   log('TICKET', `#${ticketId} — ${PROBLEM_META[key]}`, true);
   log('COMPLETED', 'ticket registered', false);
+
+  await wait(800);
+  addRestartCard();
+}
+
+// ============================================================================
+// Case 3 · Open ticket dedup (Step B)
+// ============================================================================
+async function openTicketAfterIntent() {
+  addUserMessage(INTENT_TEXT);
+  setNetStatus('जाँच रहे हैं…');
+  log('entry', 'open_ticket — intent sent', false);
+
+  await wait(700);
+  await showTyping(1200);
+  addWiomMessage('एक सेकंड — आपके account का status देख लेते हैं…');
+
+  await wait(800);
+  await showTyping(1400);
+  addStatusCheckMixed([
+    { ok: true,  text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
+    { ok: true,  text: 'Wiom Wi-Fi से जुड़े हैं' },
+    { ok: false, text: 'पहले से एक खुली शिकायत मिली: #612345' }
+  ]);
+  log('STEP_B', 'open ticket found', true);
+
+  await wait(1000);
+  await showTyping(1200);
+  addWiomWithSideBySide(
+    'कल रात आपने एक शिकायत दर्ज की थी — <b>टिकट #612345</b>। क्या यह वही समस्या है, या नई दिक्कत है?',
+    [
+      { label: 'वही समस्या है',  onClick: () => onSameProblem() },
+      { label: 'नई समस्या है',   onClick: () => onDifferentProblem() }
+    ]
+  );
+  log('B_ASK_SAME', 'awaiting same/different', false);
+}
+
+async function onSameProblem() {
+  addUserMessage('वही समस्या है', 'क्या यह वही समस्या है, या नई दिक्कत है?');
+  log('B_ASK_SAME', '→ same', false);
+
+  activeComplaint = {
+    id: '612345', problem: 'नेट नहीं चल रहा',
+    team: 'रमेश नेटवर्क टीम', eta: '13 दिसं, 5pm तक',
+    status: 'टीम काम कर रही है', stage: 'in_progress'
+  };
+  setNetStatus('टीम काम कर रही है');
+  showTicketLine(activeComplaint.team, activeComplaint.eta);
+
+  await wait(700);
+  await showTyping(1400);
+  addWiomMessage(
+    `<b>ठीक है — मौजूदा शिकायत में आपकी update जोड़ दी है।</b>\n\n` +
+    `<b>टिकट:</b> #${activeComplaint.id}\n` +
+    `<b>स्थिति:</b> टीम पहले से लगी है\n` +
+    `<b>टीम:</b> ${activeComplaint.team}\n` +
+    `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
+    `दोबारा नई शिकायत नहीं बनाई — एक ही ticket पर काम चल रहा है।`,
+    { cta: [{ label: 'इंजीनियर को कॉल करें', onClick: () => window.open('tel:9876543210') }] }
+  );
+  log('COMPLETED', 'comment added to existing ticket', false);
+
+  await wait(800);
+  addRestartCard();
+}
+
+async function onDifferentProblem() {
+  addUserMessage('नई समस्या है', 'क्या यह वही समस्या है, या नई दिक्कत है?');
+  log('B_ASK_SAME', '→ different', false);
+
+  await wait(700);
+  await showTyping(1200);
+  addWiomMessage('ठीक है — नई शिकायत के लिए बताइए, आपकी दिक्कत क्या है?', {
+    cta: [
+      { label: 'नेट नहीं चल रहा',           onClick: () => onPickIssue('not_working',  'नेट नहीं चल रहा') },
+      { label: 'नेट रुक रुक कर चल रहा है', onClick: () => onPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
+    ]
+  });
+}
+
+// ============================================================================
+// Case 4 · 48hr resolved reopen (Step C)
+// ============================================================================
+async function resolvedReopenAfterIntent() {
+  addUserMessage(INTENT_TEXT);
+  setNetStatus('जाँच रहे हैं…');
+  log('entry', 'resolved_reopen — intent sent', false);
+
+  await wait(700);
+  await showTyping(1200);
+  addWiomMessage('एक सेकंड — आपका पुराना history चेक कर रहा हूँ…');
+
+  await wait(800);
+  await showTyping(1400);
+  addStatusCheckMixed([
+    { ok: true,  text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
+    { ok: true,  text: 'Wiom Wi-Fi से जुड़े हैं' },
+    { ok: false, text: 'कल हल हुई शिकायत मिली: #612301' }
+  ]);
+  log('STEP_C', '48hr resolved ticket found', true);
+
+  await wait(1000);
+  await showTyping(1200);
+  addWiomWithSideBySide(
+    'कल आपकी एक शिकायत (<b>#612301</b>) हल हुई थी — फिर भी आज दिक्कत है? क्या वही दिक्कत वापस आई है?',
+    [
+      { label: 'हाँ, वही दिक्कत', onClick: () => onReopenSame() },
+      { label: 'नहीं, अलग है',     onClick: () => onReopenDifferent() }
+    ]
+  );
+  log('C_ASK_REOPEN', 'awaiting yes/no', false);
+}
+
+async function onReopenSame() {
+  addUserMessage('हाँ, वही दिक्कत', 'क्या वही दिक्कत वापस आई है?');
+  log('C_ASK_REOPEN', '→ reopen', false);
+
+  activeComplaint = {
+    id: '612301', problem: 'नेट नहीं चल रहा (reopened)',
+    team: 'रमेश नेटवर्क टीम', eta: '13 दिसं, 5pm तक',
+    status: 'शिकायत reopen की', stage: 'reopened'
+  };
+  setNetStatus('शिकायत reopen की');
+  showTicketLine(activeComplaint.team, activeComplaint.eta);
+
+  await wait(700);
+  await showTyping(1400);
+  addWiomMessage(
+    `<b>उसी शिकायत को फिर से खोल दिया है।</b> 🙏\n\n` +
+    `<b>टिकट:</b> #${activeComplaint.id} · reopened\n` +
+    `<b>टीम:</b> ${activeComplaint.team} (वही engineer जो पहले आए थे)\n` +
+    `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
+    `इस बार पक्का देखेंगे — पुरानी history के साथ भेज दिया है।`,
+    { cta: [{ label: 'इंजीनियर को कॉल करें', onClick: () => window.open('tel:9876543210') }] }
+  );
+  log('COMPLETED', 'ticket reopened', false);
+
+  await wait(800);
+  addRestartCard();
+}
+
+async function onReopenDifferent() {
+  addUserMessage('नहीं, अलग है', 'क्या वही दिक्कत वापस आई है?');
+  log('C_ASK_REOPEN', '→ different', false);
+
+  await wait(700);
+  await showTyping(1200);
+  addWiomMessage('ठीक है — बताइए, अबकी दिक्कत क्या है?', {
+    cta: [
+      { label: 'नेट नहीं चल रहा',           onClick: () => onPickIssue('not_working',  'नेट नहीं चल रहा') },
+      { label: 'नेट रुक रुक कर चल रहा है', onClick: () => onPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
+    ]
+  });
+}
+
+// ============================================================================
+// Case 5 · Ping FAIL fast-path (Step D)
+// ============================================================================
+async function pingFailAfterIntent() {
+  addUserMessage(INTENT_TEXT);
+  setNetStatus('जाँच रहे हैं…');
+  log('entry', 'ping_fail — intent sent', false);
+
+  await wait(700);
+  await showTyping(1200);
+  addWiomMessage('अरे, चलिए तुरंत देखते हैं…');
+
+  await wait(800);
+  await showTyping(1500);
+  addStatusCheckMixed([
+    { ok: true,  text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
+    { ok: false, text: 'आपके नेट बॉक्स से connection नहीं हो पा रहा' },
+    { ok: false, text: 'इलाके में infrastructure-level दिक्कत मिली' }
+  ]);
+  log('STEP_D', 'ping FAIL — fast-path', true);
+
+  await wait(1100);
+  await showTyping(1400);
+  addWiomMessage(
+    'आपके नेट बॉक्स तक हमारा signal नहीं पहुँच रहा — यह आपके इलाके की दिक्कत है (फाइबर cut / बिजली / NAS down)।\n\n' +
+    'ऐसे case में restart करने का फायदा नहीं — सीधे टीम को भेज रहे हैं।'
+  );
+
+  await wait(1200);
+  await showTyping(1400);
+
+  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
+  activeComplaint = {
+    id: ticketId,
+    problem: 'INTERNET SUPPLY DOWN (इलाके में outage)',
+    team: 'रमेश नेटवर्क टीम',
+    eta: '13 दिसं, 5pm तक',
+    status: 'टीम भेजी जा रही है',
+    stage: 'registered'
+  };
+  setNetStatus('टीम भेजी जा रही है');
+  showTicketLine(activeComplaint.team, activeComplaint.eta);
+
+  addWiomMessage(
+    `<b>शिकायत तुरंत दर्ज कर दी है।</b> 🙏\n\n` +
+    `<b>टिकट:</b> #${ticketId}\n` +
+    `<b>समस्या:</b> इलाके में नेट बंद है\n` +
+    `<b>Type:</b> SERVICE · 4hr TAT\n` +
+    `<b>टीम:</b> रमेश नेटवर्क टीम\n` +
+    `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
+    `आपके इलाके में और customers की भी यही दिक्कत हो सकती है — टीम सबको एक साथ ठीक करेगी।`,
+    { cta: [{ label: 'इंजीनियर को कॉल करें', onClick: () => window.open('tel:9876543210') }] }
+  );
+  log('TICKET', `fast-path #${ticketId} — INTERNET SUPPLY DOWN`, true);
+  log('COMPLETED', 'ticket auto-created (skipped E)', false);
+
+  await wait(800);
+  addRestartCard();
+}
+
+// ============================================================================
+// Case 6 · INACTIVE plan (Step A)
+// ============================================================================
+async function inactivePlanAfterIntent() {
+  addUserMessage(INTENT_TEXT);
+  setNetStatus('जाँच रहे हैं…');
+  log('entry', 'inactive_plan — intent sent', false);
+
+  await wait(700);
+  await showTyping(1200);
+  addWiomMessage('एक सेकंड — आपके plan का status देख रहा हूँ…');
+
+  await wait(800);
+  await showTyping(1400);
+  addStatusCheckMixed([
+    { ok: false, text: 'आपका ₹150 का plan 5 दिसंबर को खत्म हो गया था' },
+    { ok: true,  text: 'Wiom Wi-Fi network मिल रहा है' },
+    { ok: false, text: 'plan inactive है — इसी वजह से नेट नहीं चल रहा' }
+  ]);
+  log('STEP_A', 'plan inactive', true);
+
+  await wait(1100);
+  await showTyping(1300);
+  setNetStatus('रिचार्ज ज़रूरी है');
+  addWiomMessage(
+    'दिक्कत समझ आ गई — आपका plan <b>5 दिसंबर</b> को expire हो गया था। बिना plan के नेट नहीं चलेगा।\n\n' +
+    'रिचार्ज करते ही नेट तुरंत वापस चालू हो जाएगा।',
+    { cta: [{ label: 'अभी रिचार्ज करें', onClick: () => onMockRecharge() }] }
+  );
+  log('COMPLETED', 'recharge prompt shown', false);
+}
+
+async function onMockRecharge() {
+  addUserMessage('अभी रिचार्ज करें', 'रिचार्ज करते ही नेट तुरंत वापस चालू हो जाएगा।');
+  await wait(700);
+  await showTyping(900);
+  addWiomMessage('आपको <b>रिचार्ज screen</b> पर ले जा रहे हैं… 💸');
+  await wait(800);
+  addRestartCard();
+}
+
+// ============================================================================
+// Case 7 · Category picker (Step F) — diverted from onRecheck(false)
+// ============================================================================
+const CATEGORY_SUBTYPES = {
+  internet_down: {
+    label: 'नेट बंद है',
+    items: [
+      { key: 'supply_down', label: 'पूरी तरह बंद', subcat: 'INTERNET SUPPLY DOWN', type: 3, queue: 'PARTNER' },
+      { key: 'recharge_dnw', label: 'रिचार्ज के बाद भी नहीं चला', subcat: 'RECHARGE DONE NOT WORKING', type: 3, queue: 'PARTNER' }
+    ]
+  },
+  slow: {
+    label: 'Slow / disconnect',
+    items: [
+      { key: 'frequent_disc', label: 'बार-बार disconnect', subcat: 'FREQUENT DISCONNECTION', type: 4, queue: 'PARTNER' },
+      { key: 'slow_speed', label: 'Speed slow / Range कम', subcat: 'SLOW SPEED / RANGE ISSUES', type: 4, queue: 'PARTNER' }
+    ]
+  },
+  signal: {
+    label: 'Signal issue',
+    items: [
+      { key: 'optical_power', label: 'Optical Power OOR', subcat: 'OPTICAL POWER OOR', type: 4, queue: 'PARTNER' },
+      { key: 'power_oor', label: 'Power OOR', subcat: 'POWER OOR', type: 4, queue: 'PARTNER' }
+    ]
+  },
+  other: {
+    label: 'कुछ और',
+    items: [
+      { key: 'payment', label: 'Payment / पैसा', subcat: 'PAYMENT', type: 4, queue: 'CX' },
+      { key: 'shifting', label: 'घर बदलना है', subcat: 'SHIFTING', type: 4, queue: 'CX' },
+      { key: 'change_request', label: 'Plan बदलना है', subcat: 'CHANGE REQUEST', type: 4, queue: 'CX' }
+    ]
+  }
+};
+
+async function showCategoryPicker(key, label) {
+  log('STEP_F', 'category picker shown', false);
+  await wait(700);
+  await showTyping(1200);
+  addWiomMessage('ठीक है, अब टिकट बनाते हैं। पहले बताइए — आपकी समस्या किस तरह की है?');
+
+  await wait(500);
+  addChipsRow([
+    { label: 'नेट बंद है',        onClick: () => onCategory('internet_down') },
+    { label: 'Slow / disconnect', onClick: () => onCategory('slow') },
+    { label: 'Signal issue',      onClick: () => onCategory('signal') },
+    { label: 'कुछ और',            onClick: () => onCategory('other') }
+  ]);
+}
+
+async function onCategory(catKey) {
+  const cat = CATEGORY_SUBTYPES[catKey];
+  addUserMessage(cat.label);
+  log('F_ASK_CATEGORY', `→ ${cat.label}`, false);
+
+  await wait(700);
+  await showTyping(1200);
+  addWiomMessage('और detail में बताइए?');
+
+  await wait(500);
+  addChipsRow(cat.items.map(s => ({
+    label: s.label,
+    onClick: () => onSubtype(cat.label, s)
+  })));
+}
+
+async function onSubtype(catLabel, subtype) {
+  addUserMessage(subtype.label);
+  log('F_ASK_SUBTYPE', `→ ${subtype.label}`, false);
+
+  await wait(700);
+  await showTyping(1500);
+
+  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
+  activeComplaint = {
+    id: ticketId,
+    problem: `${catLabel} · ${subtype.label}`,
+    team: subtype.queue === 'PARTNER' ? 'रमेश नेटवर्क टीम' : 'Wiom CX टीम',
+    eta: '13 दिसं, 5pm तक',
+    status: 'शिकायत दर्ज हो गई',
+    stage: 'registered'
+  };
+  setNetStatus('शिकायत दर्ज हो गई');
+  showTicketLine(activeComplaint.team, activeComplaint.eta);
+
+  addWiomMessage(
+    `<b>आपकी शिकायत दर्ज कर दी है।</b> 🙏\n\n` +
+    `<b>टिकट:</b> #${ticketId}\n` +
+    `<b>Category:</b> ${catLabel} → ${subtype.label}\n` +
+    `<b>Type:</b> ${subtype.type === 3 ? 'SERVICE · 4hr TAT' : 'OTHERS · 24hr TAT'}\n` +
+    `<b>Queue:</b> ${subtype.queue}\n` +
+    `<b>टीम:</b> ${activeComplaint.team}\n` +
+    `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।`,
+    { cta: [{ label: 'इंजीनियर को कॉल करें', onClick: () => window.open('tel:9876543210') }] }
+  );
+  log('TICKET', `categorized #${ticketId} — ${subtype.subcat}`, true);
+  log('COMPLETED', 'ticket created via category picker', false);
+
+  await wait(800);
+  addRestartCard();
+}
+
+// ============================================================================
+// Case 8 · Kapture API error (Step G error) — diverted from onRecheck(false)
+// ============================================================================
+async function simulateApiError(key, label) {
+  log('STEP_G', 'attempting ticket creation', false);
+  await wait(700);
+  await showTyping(1300);
+  addWiomMessage('टिकट बना रहा हूँ…');
+
+  await wait(1500);
+  await showTyping(1500);
+  addWiomMessage('एक सेकंड, कुछ issue आ रही है — दोबारा कोशिश कर रहा हूँ…');
+  log('STEP_G', 'retry once', true);
+
+  await wait(2000);
+  await showTyping(1300);
+  setNetStatus('मदद के लिए कॉल करें');
+  addWiomMessage(
+    `माफ़ कीजिए — अभी हमारा ticket system थोड़ा slow है, बना नहीं पा रहे। 🙏\n\n` +
+    `<b>तब तक</b> इस पर कॉल करें — हमारी team तुरंत आपकी मदद करेगी:\n` +
+    `<b>1800-123-4567</b>\n\n` +
+    `Reference के लिए आपकी समस्या save कर ली है — call पर बताने की ज़रूरत नहीं।`,
+    { cta: [{ label: 'अभी कॉल करें', onClick: () => window.open('tel:18001234567') }] }
+  );
+  log('COMPLETED', 'fallback to call', false);
+
+  await wait(800);
+  addRestartCard();
+}
+
+// ============================================================================
+// Case 9 · Angry user fast-track (Sentiment)
+// ============================================================================
+async function angryUserAfterIntent() {
+  addUserMessage(INTENT_TEXT);
+  log('SENTIMENT', 'frustrated detected', true);
+  setNetStatus('जाँच रहे हैं…');
+
+  await wait(700);
+  await showTyping(1300);
+  addWiomMessage('वर्मा जी, माफ़ी चाहते हैं — आपकी परेशानी समझ सकते हैं। 🙏\n\nआपकी शिकायत को तुरंत <b>HIGH priority</b> पर रख रहे हैं — middle की जाँच skip कर देते हैं।');
+
+  await wait(900);
+  await showTyping(1400);
+
+  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
+  activeComplaint = {
+    id: ticketId,
+    problem: 'नेट नहीं चल रहा (HIGH priority)',
+    team: 'रमेश नेटवर्क टीम',
+    eta: '1 घंटा',
+    status: 'HIGH priority · टीम जा रही है',
+    stage: 'registered'
+  };
+  setNetStatus('HIGH priority · 1 घंटे में');
+  showTicketLine(activeComplaint.team, '1 घंटा');
+
+  addWiomMessage(
+    `<b>आपकी शिकायत HIGH priority पर दर्ज हो गई है।</b>\n\n` +
+    `<b>टिकट:</b> #${ticketId}\n` +
+    `<b>Priority:</b> HIGH (तुरंत)\n` +
+    `<b>टीम:</b> रमेश नेटवर्क टीम\n` +
+    `<b>1 घंटे</b> के अंदर समाधान हो जाएगा।\n\n` +
+    `इंजीनियर अगले 10 मिनट में आपको कॉल करेंगे।`,
+    { cta: [{ label: 'इंजीनियर को कॉल करें', onClick: () => window.open('tel:9876543210') }] }
+  );
+  log('TICKET', `priority-bumped #${ticketId}`, true);
+  log('COMPLETED', 'angry user fast-tracked', false);
 
   await wait(800);
   addRestartCard();
@@ -1719,8 +2297,15 @@ async function runContinuityFlow() {
 // ============ SCENARIO PICKER ============
 
 const SCENARIOS = {
-  fresh:       runFreshFlow,
-  continuity:  runContinuityFlow
+  fresh:           runFreshFlow,
+  continuity:      runContinuityFlow,
+  open_ticket:     runOpenTicketFlow,
+  resolved_reopen: runResolvedReopenFlow,
+  ping_fail:       runPingFailFlow,
+  inactive_plan:   runInactivePlanFlow,
+  category_picker: runCategoryPickerFlow,
+  api_error:       runApiErrorFlow,
+  angry_user:      runAngryUserFlow
 };
 let currentScenario = 'fresh';
 
@@ -1823,6 +2408,13 @@ function pickScenario(caseName) {
 contextNextBtn.addEventListener('click', showScenarios);
 document.getElementById('scenario1Card').addEventListener('click', () => pickScenario('fresh'));
 document.getElementById('scenario2Card').addEventListener('click', () => pickScenario('continuity'));
+document.getElementById('scenario3Card').addEventListener('click', () => pickScenario('open_ticket'));
+document.getElementById('scenario4Card').addEventListener('click', () => pickScenario('resolved_reopen'));
+document.getElementById('scenario5Card').addEventListener('click', () => pickScenario('ping_fail'));
+document.getElementById('scenario6Card').addEventListener('click', () => pickScenario('inactive_plan'));
+document.getElementById('scenario7Card').addEventListener('click', () => pickScenario('category_picker'));
+document.getElementById('scenario8Card').addEventListener('click', () => pickScenario('api_error'));
+document.getElementById('scenario9Card').addEventListener('click', () => pickScenario('angry_user'));
 
 // Override the end-of-chat restart card behavior:
 // instead of re-running the same scenario, return to the scenario chooser.
