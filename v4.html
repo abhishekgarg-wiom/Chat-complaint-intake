@@ -1123,7 +1123,7 @@ body {
       <div class="scenario-card" id="scenario7Card" data-case="wrong_wifi">
         <div class="scenario-card-num">Case 7 · Wrong Wi-Fi</div>
         <div class="scenario-card-title">गलत Wi-Fi से जुड़े हैं</div>
-        <div class="scenario-card-desc">Status check में पता चलता है — user अपने Wiom Wi-Fi से नहीं जुड़े (किसी और network पर या mobile data पर हैं)। Bot कहता है: "Wiom Ramesh 1234 से जुड़ें, नेट तुरंत चलने लगेगा।" अगर फिर भी दिक्कत → issue picker पर route।</div>
+        <div class="scenario-card-desc">Status check में पता चलता है — user अपने Wiom Wi-Fi से नहीं जुड़े। यही एक line अलग दिखती है (❌ Wi-Fi नहीं जुड़े), बाकी पूरा flow Case 1 जैसा — issue picker → troubleshoot (जहाँ step 1 ही Wi-Fi check है) → recheck → शिकायत।</div>
       </div>
 
       <div class="scenario-group-label">Errors · Step G</div>
@@ -2072,7 +2072,7 @@ async function returningActiveAfterIntent() {
 // CASE 2 — Continuity (user-triggered) · open ticket exists, user asks
 // ============================================================================
 // ============================================================================
-// Case 7 — Wrong Wi-Fi (user on different network / mobile data)
+// Case 7 — Wrong Wi-Fi · same flow as Case 1, only status check shows ❌ on Wi-Fi
 // ============================================================================
 async function wrongWifiAfterIntent() {
   addUserMessage(INTENT_TEXT);
@@ -2081,7 +2081,7 @@ async function wrongWifiAfterIntent() {
 
   await wait(700);
   await showTyping(1200);
-  addWiomMessage('एक सेकंड — आपका Wi-Fi कनेक्शन देख रहे हैं…');
+  addWiomMessage('अरे, आपका रिचार्ज तो <b>28 दिसंबर तक चालू</b> है — फिर भी दिक्कत? चलिए तुरंत देखते हैं।');
 
   await wait(800);
   await showTyping(1300);
@@ -2089,48 +2089,17 @@ async function wrongWifiAfterIntent() {
     { ok: true,  text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
     { ok: false, text: 'आप अपने Wi-Fi (Wiom Ramesh 1234) से नहीं जुड़े हैं' }
   ]);
-  log('DIAGNOSTIC', 'wrong wifi detected', true);
+  log('STATUS_CHECK', 'wifi mismatch flagged', true);
 
   await wait(1000);
-  await showTyping(1400);
-  addWiomMessage(
-    'आपका Wi-Fi है — <b>Wiom Ramesh 1234</b>\n\n' +
-    'लगता है आप अभी किसी और Wi-Fi से या mobile data पर हैं। मोबाइल की Wi-Fi list में जाकर <b>Wiom Ramesh 1234</b> से जुड़ें — नेट तुरंत चलने लगेगा।',
-    {
-      cta: [
-        { label: 'Wi-Fi से जुड़ गया',         onClick: () => onWifiConnected() },
-        { label: 'फिर भी नेट नहीं चल रहा', onClick: () => onWifiStillNotWorking() }
-      ]
-    }
-  );
-}
-
-async function onWifiConnected() {
-  addUserMessage('Wi-Fi से जुड़ गया', 'Wiom Ramesh 1234 से जुड़ें');
-  setNetStatus('चालू है');
-  log('DIAGNOSTIC', 'wrong wifi → self-resolved', false);
-
-  await wait(700);
-  await showTyping(900);
-  addWiomMessage('बढ़िया! 🎉\n\nअब नेट चलना चाहिए। और कोई दिक्कत हो तो यहीं बताएं।');
-  log('COMPLETED', 'wifi fix resolved', false);
-
-  await wait(600);
-  addRestartCard();
-}
-
-async function onWifiStillNotWorking() {
-  addUserMessage('फिर भी नेट नहीं चल रहा');
-  log('DIAGNOSTIC', 'wifi fix did not help → issue picker', false);
-
-  await wait(700);
-  await showTyping(1100);
-  addWiomMessage('ठीक है — बताइए, दिक्कत क्या है?', {
+  await showTyping(1000);
+  addWiomMessage('एक बात बताइए — दिक्कत क्या है?', {
     cta: [
       { label: 'नेट नहीं चल रहा',           onClick: () => onPickIssue('not_working',  'नेट नहीं चल रहा') },
       { label: 'नेट रुक रुक कर चल रहा है', onClick: () => onPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
     ]
   });
+  log('ASK_ISSUE', 'awaiting 2-option pick', false);
 }
 
 // ============================================================================
