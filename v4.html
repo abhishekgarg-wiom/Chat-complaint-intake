@@ -1080,53 +1080,55 @@ body {
       <div class="scenario-title">v4 — Complaint intake flow</div>
       <div class="scenario-subtitle">Default flows + PRD edge cases · हर scenario अलग path दिखाती है।</div>
 
-      <div class="scenario-group-label">Default flow</div>
+      <div class="scenario-group-label">Happy flow</div>
       <div class="scenario-card" id="scenario1Card" data-case="fresh">
-        <div class="scenario-card-num">Case 1 · नई शिकायत</div>
+        <div class="scenario-card-num">Case 1 · Happy flow</div>
         <div class="scenario-card-title">पहली बार चैट खोली है</div>
         <div class="scenario-card-desc">User types "मेरा नेट नहीं चल रहा" → status check → issue pick → troubleshoot → recheck gate (हाँ/नहीं) → "नहीं" पर शिकायत दर्ज होती है (call CTA + 13 दिसंबर date)।</div>
       </div>
 
-      <div class="scenario-group-label">Returning users</div>
-      <div class="scenario-card" id="scenario2Card" data-case="returning_active">
-        <div class="scenario-card-num">Case 2 · खुली शिकायत के साथ</div>
-        <div class="scenario-card-title">पहले से active शिकायत है</div>
-        <div class="scenario-card-desc">User की पहले से active शिकायत है। चैट खोलकर "मेरा नेट नहीं चल रहा" बोलते हैं। Sticky-bar पहले से engineer + ETA दिखा रहा है। Bot empathic रहता है: "रोहित कुमार पहले से लगे हैं, चाहें तो directly call करें।"</div>
-      </div>
-
-      <div class="scenario-group-label">Dedup · Step C</div>
-      <div class="scenario-card" id="scenario3Card" data-case="resolved_reopen">
-        <div class="scenario-card-num">Case 3 · Resolved (पर closed नहीं)</div>
-        <div class="scenario-card-title">कल हल हुई थी, फिर लौटी</div>
-        <div class="scenario-card-desc">48 घंटे में resolved शिकायत जो customer ने rating देकर close नहीं की। Bot सीधे पूछता है "कल आपकी समस्या सुलझाई गई थी — क्या वही दिक्कत वापस आई?" — हाँ पर reopen।</div>
-      </div>
-
-      <div class="scenario-card" id="scenario4Card" data-case="resolved_closed">
-        <div class="scenario-card-num">Case 4 · Resolved + closed</div>
-        <div class="scenario-card-title">पिछली शिकायत बंद कर दी थी</div>
-        <div class="scenario-card-desc">पिछली शिकायत हल हुई थी और user ने rating देकर close भी कर दी थी। अब नई दिक्कत आई — flow Case 1 की तरह fresh शुरू होता है, कोई reopen prompt नहीं।</div>
-      </div>
-
-      <div class="scenario-group-label">Diagnostics · Steps A, D</div>
-      <div class="scenario-card" id="scenario5Card" data-case="ping_fail">
-        <div class="scenario-card-num">Case 5 · Step D fail</div>
-        <div class="scenario-card-title">इलाके में outage है</div>
-        <div class="scenario-card-desc">NAS ping FAIL — नेट बॉक्स unreachable। Bot troubleshoot skip करता है (restart से फायदा नहीं) और तुरंत <b>INTERNET SUPPLY DOWN</b> (Type 3, 4hr) शिकायत बना देता है।</div>
-      </div>
-
+      <div class="scenario-group-label">Recharge flow</div>
       <div class="scenario-card" id="scenario6Card" data-case="inactive_plan">
-        <div class="scenario-card-num">Case 6 · Step A</div>
+        <div class="scenario-card-num">Case 2 · Recharge flow</div>
         <div class="scenario-card-title">रिचार्ज खत्म है</div>
         <div class="scenario-card-desc">INACTIVE plan। शिकायत flow शुरू नहीं होती — Bot सीधे रिचार्ज prompt भेजता है, क्योंकि बिना plan के नेट नहीं चलेगा।</div>
       </div>
 
+      <div class="scenario-group-label">Open ticket</div>
+      <div class="scenario-card" id="scenario2Card" data-case="returning_active">
+        <div class="scenario-card-num">Case 3 · Open ticket</div>
+        <div class="scenario-card-title">पहले से active शिकायत है</div>
+        <div class="scenario-card-desc">User की पहले से active शिकायत है। चैट खोलकर "मेरा नेट नहीं चल रहा" बोलते हैं। Sticky-bar पहले से engineer + ETA दिखा रहा है। Bot empathic रहता है: "रोहित कुमार पहले से लगे हैं, चाहें तो directly call करें।"</div>
+      </div>
+
+      <div class="scenario-group-label">Resolved ticket</div>
+      <div class="scenario-card" id="scenario3Card" data-case="resolved_reopen">
+        <div class="scenario-card-num">Case 4 · Resolved ticket</div>
+        <div class="scenario-card-title">कल हल हुई थी, फिर लौटी</div>
+        <div class="scenario-card-desc">48 घंटे में resolved शिकायत जो customer ने rating देकर close नहीं की। Bot सीधे पूछता है "कल आपकी समस्या सुलझाई गई थी — क्या वही दिक्कत वापस आई?" — हाँ पर reopen।</div>
+      </div>
+
+      <div class="scenario-group-label">No ping</div>
+      <div class="scenario-card" id="scenario5Card" data-case="ping_fail">
+        <div class="scenario-card-num">Case 5 · No ping</div>
+        <div class="scenario-card-title">नेट बॉक्स से connection नहीं हो रहा</div>
+        <div class="scenario-card-desc">NAS ping fail — bot सीधे पूछता है "क्या आपका नेट बॉक्स ON है?"। <b>हाँ</b> → service ticket तुरंत (Type 3, 4hr)। <b>नहीं</b> → on करने और सही Wi-Fi से connect होने को कहता है, फिर recheck → ticket if still down.</div>
+      </div>
+
+      <div class="scenario-group-label">No Wi-Fi connected</div>
       <div class="scenario-card" id="scenario7Card" data-case="wrong_wifi">
-        <div class="scenario-card-num">Case 7 · Wrong Wi-Fi</div>
+        <div class="scenario-card-num">Case 6 · No Wi-Fi connected</div>
         <div class="scenario-card-title">गलत Wi-Fi से जुड़े हैं</div>
         <div class="scenario-card-desc">Status check में पता चलता है — user अपने Wiom Wi-Fi से नहीं जुड़े। यही एक line अलग दिखती है (❌ Wi-Fi नहीं जुड़े), बाकी पूरा flow Case 1 जैसा — issue picker → troubleshoot (जहाँ step 1 ही Wi-Fi check है) → recheck → शिकायत।</div>
       </div>
 
-      <div class="scenario-group-label">Errors · Step G</div>
+      <div class="scenario-group-label">Others</div>
+      <div class="scenario-card" id="scenario4Card" data-case="resolved_closed">
+        <div class="scenario-card-num">Case 7 · Resolved + closed</div>
+        <div class="scenario-card-title">पिछली शिकायत बंद कर दी थी</div>
+        <div class="scenario-card-desc">पिछली शिकायत हल हुई थी और user ने rating देकर close भी कर दी थी। अब नई दिक्कत आई — flow Case 1 (Happy flow) की तरह fresh शुरू होता है, कोई reopen prompt नहीं।</div>
+      </div>
+
       <div class="scenario-card" id="scenario8Card" data-case="api_error">
         <div class="scenario-card-num">Case 8 · Step G error</div>
         <div class="scenario-card-title">शिकायत नहीं बन पाई</div>
@@ -1974,14 +1976,21 @@ async function pingFailAfterIntent() {
 
   await wait(700);
   await showTyping(1500);
-  addWiomMessage(
-    'आपके नेट बॉक्स तक हमारा सिग्नल नहीं पहुँच रहा — यह आपके इलाके की दिक्कत है (फाइबर कटा / बिजली / नेटवर्क बंद)।\n\n' +
-    'ऐसी स्थिति में नेट बॉक्स रीस्टार्ट करने का फायदा नहीं — इंजीनियर इसको ठीक कर रहे हैं।\n\n' +
-    'आपके इलाके में और ग्राहकों को भी यही दिक्कत हो सकती है — इंजीनियर एक साथ देख रहे हैं।'
+  addWiomWithSideBySide(
+    'हम आपके नेट बॉक्स से connect नहीं कर पा रहे हैं। क्या आपका <b>नेट बॉक्स ON</b> है?',
+    [
+      { label: 'हाँ, ON है',  onClick: () => onNetboxOn() },
+      { label: 'नहीं, OFF है', onClick: () => onNetboxOff() }
+    ]
   );
-  log('STEP_D', 'ping FAIL — infrastructure explained', true);
+  log('STEP_D', 'awaiting netbox ON/OFF', false);
+}
 
-  await wait(1200);
+async function onNetboxOn() {
+  addUserMessage('हाँ, ON है', 'क्या आपका नेट बॉक्स ON है?');
+  log('STEP_D', 'netbox ON → service ticket', true);
+
+  await wait(700);
   await showTyping(1400);
 
   const ticketId = String(Math.floor(600000 + Math.random() * 99999));
@@ -1998,15 +2007,86 @@ async function pingFailAfterIntent() {
 
   addWiomMessage(
     buildTicketMessage({
-      ticketId,
-      problem: 'इलाके में नेट बंद है',
-      type: 'SERVICE · 4hr TAT'
+      ticketId, problem: 'इलाके में नेट बंद है', type: 'SERVICE · 4hr TAT'
     }) +
     `\n\nहम जल्द से जल्द आपके इलाके में काम शुरू करेंगे।`,
     { cta: callEngineerCta() }
   );
   log('TICKET', `fast-path #${ticketId} — INTERNET SUPPLY DOWN`, true);
-  log('COMPLETED', 'ticket auto-created (skipped E)', false);
+  log('COMPLETED', 'ticket auto-created (netbox ON)', false);
+
+  await wait(800);
+  addRestartCard();
+}
+
+async function onNetboxOff() {
+  addUserMessage('नहीं, OFF है', 'क्या आपका नेट बॉक्स ON है?');
+  log('STEP_D', 'netbox OFF → guide user', false);
+
+  await wait(700);
+  await showTyping(1500);
+  addWiomMessage(
+    'ठीक है — कुछ steps follow करें:\n\n' +
+    '<b>1.</b> अपने <b>नेट बॉक्स को ON</b> करें (तार लगाएं, switch on करें)\n' +
+    '<b>2.</b> लाइटें स्थिर होने तक रुकें\n' +
+    '<b>3.</b> मोबाइल को सही Wi-Fi (<b>Wiom Ramesh 1234</b>) से जोड़ें\n\n' +
+    'सब हो जाए तो नीचे का बटन दबाएं।',
+    {
+      media: true,
+      cta: [{ label: 'अब check करें', onClick: () => onNetboxRecheck() }]
+    }
+  );
+}
+
+async function onNetboxRecheck() {
+  addUserMessage('अब check करें', 'सब हो जाए तो नीचे का बटन दबाएं।');
+  await wait(700);
+  await showTyping(1100);
+  addWiomWithSideBySide(
+    'क्या अब आपका नेट सही चल रहा है?',
+    [
+      { label: 'हाँ',  onClick: () => onNetboxResolved() },
+      { label: 'नहीं', onClick: () => onNetboxStillDown() }
+    ]
+  );
+}
+
+async function onNetboxResolved() {
+  addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
+  setNetStatus('चालू है');
+  log('COMPLETED', 'netbox flow → self-resolved', false);
+  await wait(700);
+  await showTyping(900);
+  addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं।');
+  await wait(700);
+  addRestartCard();
+}
+
+async function onNetboxStillDown() {
+  addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
+  log('STEP_D', 'still down after on/recheck → ticket', false);
+
+  await wait(700);
+  await showTyping(1400);
+
+  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
+  activeComplaint = {
+    id: ticketId,
+    problem: 'नेट नहीं चल रहा',
+    engineer: 'रोहित कुमार',
+    eta: '13 दिसं, 5pm तक',
+    status: 'शिकायत दर्ज हो गई',
+    stage: 'registered'
+  };
+  setNetStatus('शिकायत दर्ज हो गई');
+  showTicketLine(activeComplaint.engineer, activeComplaint.eta);
+
+  addWiomMessage(
+    buildTicketMessage({ ticketId, problem: 'नेट नहीं चल रहा' }) +
+    `\n\nहम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।`,
+    { cta: callEngineerCta() }
+  );
+  log('TICKET', `#${ticketId}`, true);
 
   await wait(800);
   addRestartCard();
