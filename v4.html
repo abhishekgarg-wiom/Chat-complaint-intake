@@ -1569,8 +1569,13 @@ function addStatusCheckMixed(items) {
 // ============================================================================
 // Shared bubble helpers
 // ============================================================================
-function buildTicketMessage({ticketId, problem, type, engineer = 'रोहित कुमार', dateLine = '13 दिसंबर, 5:00 pm तक समाधान हो जाएगा।'}) {
-  let msg = `<b>आपकी शिकायत दर्ज कर दी है।</b> 🙏\n\n` +
+function buildTicketMessage({
+  ticketId, problem, type,
+  engineer = 'रोहित कुमार',
+  dateLine = '13 दिसंबर, 5:00 pm तक समाधान हो जाएगा।',
+  opening = 'आपकी शिकायत दर्ज कर दी है।'
+}) {
+  let msg = `<b>${opening}</b> 🙏\n\n` +
     `<b>टिकट:</b> #${ticketId}\n` +
     `<b>समस्या:</b> ${problem}\n`;
   if (type) msg += `<b>Type:</b> ${type}\n`;
@@ -1724,9 +1729,9 @@ async function onApiErrorRecheck(isYes) {
   setNetStatus('मदद के लिए कॉल करें');
   addWiomMessage(
     `माफ़ कीजिए — अभी हमारा टिकट सिस्टम काम नहीं कर रहा, इसलिए टिकट सेव नहीं हो पाया। 🙏\n\n` +
-    `<b>तब तक</b> इस नंबर पर कॉल करें — हमारा सपोर्ट एजेंट तुरंत मदद करेगा:\n` +
+    `<b>तब तक</b> इस नंबर पर कॉल करें — हमारा सपोर्ट एजेंट तुरंत आपकी मदद करेगा:\n` +
     `<b>1800-123-4567</b>\n\n` +
-    `कॉल पर अपनी समस्या एक बार और बतानी पड़ेगी — सीधे रोहित कुमार या सपोर्ट एजेंट से बात करवा देंगे।`,
+    `कॉल पर अपनी समस्या एक बार और बतानी पड़ेगी — हम जल्द से जल्द आपकी समस्या सुलझाने का प्रयास करेंगे।`,
     { cta: [{ label: 'अभी कॉल करें', onClick: () => window.open('tel:18001234567') }] }
   );
   log('COMPLETED', 'fallback to call', false);
@@ -1872,7 +1877,7 @@ async function onRecheck(isYes, key, label) {
 
   addWiomMessage(
     buildTicketMessage({ ticketId, problem: label }) +
-    `\n\nरोहित कुमार आपकी शिकायत पर लग गए हैं — आप निश्चिंत रहें, हम साथ हैं।`,
+    `\n\nहम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।`,
     { cta: callEngineerCta() }
   );
   log('TICKET', `#${ticketId} — ${PROBLEM_META[key]}`, true);
@@ -1906,22 +1911,25 @@ async function onReopenSame() {
   log('C_ASK_REOPEN', '→ reopen', false);
 
   activeComplaint = {
-    id: '612301', problem: 'नेट नहीं चल रहा (reopened)',
-    engineer: 'रोहित कुमार', eta: '13 दिसं, 5pm तक',
-    status: 'शिकायत reopen की', stage: 'reopened'
+    id: '612301',
+    problem: 'नेट नहीं चल रहा',
+    engineer: 'रोहित कुमार',
+    eta: '13 दिसं, 5pm तक',
+    status: 'समस्या पर फिर से काम शुरू',
+    stage: 'reopened'
   };
-  setNetStatus('शिकायत reopen की');
+  setNetStatus('समस्या पर फिर से काम शुरू');
   showTicketLine(activeComplaint.engineer, activeComplaint.eta);
 
   await wait(700);
   await showTyping(1400);
   addWiomMessage(
     buildTicketMessage({
-      ticketId: `${activeComplaint.id} · reopened`,
+      ticketId: activeComplaint.id,
       problem: activeComplaint.problem,
-      engineer: `${activeComplaint.engineer} (वही जो पहले आए थे)`
+      opening: 'आपकी पिछली समस्या पर फिर से काम शुरू कर दिया है।'
     }) +
-    `\n\nइस बार पक्का देखेंगे — पुरानी history के साथ भेज दिया है।`,
+    `\n\nहम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।`,
     { cta: callEngineerCta() }
   );
   log('COMPLETED', 'ticket reopened', false);
@@ -1955,8 +1963,8 @@ async function pingFailAfterIntent() {
   await showTyping(1500);
   addWiomMessage(
     'आपके नेट बॉक्स तक हमारा सिग्नल नहीं पहुँच रहा — यह आपके इलाके की दिक्कत है (फाइबर कटा / बिजली / नेटवर्क बंद)।\n\n' +
-    'ऐसी स्थिति में नेट बॉक्स रीस्टार्ट करने का फायदा नहीं — सीधे रोहित कुमार को भेज रहे हैं।\n\n' +
-    'आपके इलाके में और ग्राहकों को भी यही दिक्कत हो सकती है — इंजीनियर सबको एक साथ ठीक करेंगे।'
+    'ऐसी स्थिति में नेट बॉक्स रीस्टार्ट करने का फायदा नहीं — हम सीधे इंजीनियर को भेज रहे हैं।\n\n' +
+    'आपके इलाके में और ग्राहकों को भी यही दिक्कत हो सकती है — इंजीनियर एक साथ देख रहे हैं।'
   );
   log('STEP_D', 'ping FAIL — infrastructure explained', true);
 
@@ -1980,7 +1988,8 @@ async function pingFailAfterIntent() {
       ticketId,
       problem: 'इलाके में नेट बंद है',
       type: 'SERVICE · 4hr TAT'
-    }),
+    }) +
+    `\n\nहम जल्द से जल्द आपके इलाके में काम शुरू करेंगे।`,
     { cta: callEngineerCta() }
   );
   log('TICKET', `fast-path #${ticketId} — INTERNET SUPPLY DOWN`, true);
@@ -2030,11 +2039,11 @@ async function returningActiveAfterIntent() {
 
   addWiomMessage(
     `वर्मा जी, हम समझ सकते हैं — परेशानी हो रही है। 🙏\n\n` +
-    `रोहित कुमार आपकी शिकायत पर <b>पहले से लगे हैं</b> — आप अकेले नहीं हैं, हम साथ में देख रहे हैं।\n\n` +
+    `रोहित कुमार आपकी शिकायत पर <b>पहले से लगे हैं</b> — हम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।\n\n` +
     `<b>टिकट:</b> #${activeComplaint.id}\n` +
     `<b>इंजीनियर:</b> रोहित कुमार\n` +
     `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
-    `अगर मन में बेचैनी हो तो रोहित जी को सीधे कॉल कर लें — वही आपके इलाके में हैं, तुरंत बात होगी।`,
+    `अगर मन में बेचैनी हो तो रोहित जी को सीधे कॉल कर सकते हैं।`,
     { cta: callEngineerCta() }
   );
   log('COMPLETED', 'returning user calmed + offered call', false);
@@ -2082,7 +2091,7 @@ async function continuityAfterIntent() {
     `<b>समस्या:</b> ${activeComplaint.problem}\n` +
     `<b>इंजीनियर:</b> ${activeComplaint.engineer}\n` +
     `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
-    `अगर मन में बेचैनी हो तो रोहित जी को सीधे कॉल कर लें — वही आपके इलाके में हैं।`,
+    `अगर मन में बेचैनी हो तो रोहित जी को सीधे कॉल कर सकते हैं।`,
     { cta: callEngineerCta() }
   );
   log('COMPLETED', 'continuity status surfaced', false);
