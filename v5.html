@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
@@ -563,6 +563,22 @@ body {
   font-family: var(--font);
 }
 .btn-yellow-cta:active { transform: scale(0.98); }
+.btn-yellow-cta-secondary {
+  background: transparent;
+  color: #444444;
+  border: 2px solid #444444;
+  border-radius: 16px;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  width: 100%;
+  cursor: pointer;
+  font-family: var(--font);
+  margin-top: 10px;
+}
+.btn-yellow-cta-secondary:active { transform: scale(0.98); }
+.context-cta-wrap .gate-btn-pair { width: 100%; }
 
 .scenario-content {
   padding: 36px 20px 0;
@@ -1077,17 +1093,19 @@ body {
   <!-- ============ SCENARIO CHOOSER ============ -->
   <section class="yellow-screen queued" id="scenarioScreen">
     <div class="scenario-content">
-      <div class="scenario-title" id="stepTitle">v5 — Linear Tour</div>
-      <div class="scenario-subtitle" id="stepSubtitle">PRD decision tree का linear demo · हर step अलग yellow screen पर खुलता है।</div>
+      <div class="scenario-title" id="stepTitle">v5 — Decision Tree Walk</div>
+      <div class="scenario-subtitle" id="stepSubtitle">PRD decision tree का guided walk · हर gate पर YES/NO पूछा जाता है।</div>
 
       <div class="scenario-card" id="stepCard">
         <div class="scenario-card-num" id="stepCardNum">Welcome</div>
         <div class="scenario-card-title" id="stepCardTitle">Tour शुरू करें</div>
-        <div class="scenario-card-desc" id="stepCardDesc">User types "मेरा नेट नहीं चल रहा" → system 8 gates के through walk करता है (A→H + bonus)। हर step अपना edge case demonstrate करता है। यह demo PRD decision tree v0.4 follow करता है।</div>
+        <div class="scenario-card-desc" id="stepCardDesc">पहले आप "मेरा नेट नहीं चल रहा" type करेंगे। फिर हर PRD gate पर एक yellow screen आएगी जहाँ आप YES/NO चुनेंगे — YES advance करता है, NO edge case दिखाता है और वापस gate पर लौटाता है।</div>
       </div>
     </div>
-    <div class="context-cta-wrap">
-      <button class="btn-yellow-cta" id="stepStartBtn">Start tour</button>
+    <div class="context-cta-wrap" id="stepCtaWrap">
+      <button class="btn-yellow-cta" id="gateBtnSingle">Start tour</button>
+      <button class="btn-yellow-cta gate-btn-pair" id="gateBtnYes" style="display:none">YES</button>
+      <button class="btn-yellow-cta-secondary gate-btn-pair" id="gateBtnNo" style="display:none">NO</button>
     </div>
   </section>
 
@@ -1727,17 +1745,11 @@ async function runReturningActiveFlow() {
 // ============================================================================
 // onIntentSent — dispatch by scenario
 // ============================================================================
+// v5 onIntentSent: after user types and sends intent, jump to Gate A
 async function onIntentSent() {
-  switch (currentScenario) {
-    case 'fresh':            return freshAfterIntent();
-    case 'resolved_closed':  return freshAfterIntent();   // closed ticket → fresh flow
-    case 'resolved_reopen':  return resolvedReopenAfterIntent();
-    case 'ping_fail':        return pingFailAfterIntent();
-    case 'inactive_plan':    return inactivePlanAfterIntent();
-    case 'wrong_wifi':       return wrongWifiAfterIntent();
-    case 'returning_active': return returningActiveAfterIntent();
-    default:                 return freshAfterIntent();
-  }
+  addUserMessage(INTENT_TEXT);
+  await wait(700);
+  showGate(0);
 }
 
 // ----- Default (Case 1) — contradiction ack + status check + issue pick -----
@@ -2075,7 +2087,7 @@ async function runResolvedClosedFlow() {
 }
 
 // ============================================================================
-// v5 — Step flow functions (linear tour through PRD decision tree)
+// v5 — Gate-based decision tree walk
 // ============================================================================
 
 function autoUserBubble(text = INTENT_TEXT) {
@@ -2084,15 +2096,14 @@ function autoUserBubble(text = INTENT_TEXT) {
   addUserMessage(text);
 }
 
-// ----- Step A · Plan Active Check (inactive plan path) -----
-async function stepAFlow() {
+// ============ Case flow functions ============
+
+// Case A · Plan inactive
+async function caseInactivePlan() {
   setNetStatus('रिचार्ज ज़रूरी है');
   seedExpiredHistory();
-
-  await wait(500);
+  await wait(400);
   autoUserBubble();
-  log('STEP_A', 'intent sent', false);
-
   await wait(700);
   await showTyping(1400);
   addWiomMessage(
@@ -2100,103 +2111,55 @@ async function stepAFlow() {
     'रिचार्ज करते ही नेट तुरंत वापस चालू हो जाएगा।',
     { cta: [{ label: 'अभी रिचार्ज करें', onClick: () => onMockRecharge() }] }
   );
-  log('STEP_A', 'recharge prompt shown', true);
   await wait(1500);
   addRestartCard();
 }
 
-// ----- Step B · Open Ticket Check -----
-async function stepBFlow() {
-  setNetStatus('चालू है');
-  seedRechargeHistory();
-
-  await wait(500);
-  autoUserBubble();
-  log('STEP_B', 'intent sent', false);
-
-  await wait(700);
-  await showTyping(1200);
-  addWiomMessage('एक सेकंड — आपके account का status देख लेते हैं…');
-
-  await wait(800);
-  await showTyping(1400);
-  addStatusCheckMixed([
-    { ok: true,  text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
-    { ok: false, text: 'पहले से एक खुली शिकायत मिली: #612345' }
-  ]);
-  log('STEP_B', 'open ticket found', true);
-
-  await wait(900);
-  await showTyping(1200);
-  addWiomWithSideBySide(
-    'कल रात आपने एक शिकायत दर्ज की थी — <b>शिकायत #612345</b>। क्या यह वही समस्या है, या नई दिक्कत है?',
-    [
-      { label: 'वही समस्या है', onClick: () => stepBSame() },
-      { label: 'नई समस्या है',  onClick: () => stepBDifferent() }
-    ]
-  );
-}
-
-async function stepBSame() {
-  addUserMessage('वही समस्या है', 'क्या यह वही समस्या है, या नई दिक्कत है?');
+// Case B · Open ticket exists — "your ticket is already open"
+async function caseOpenTicket() {
   activeComplaint = {
     id: '612345', problem: 'नेट नहीं चल रहा', engineer: 'रोहित कुमार',
-    eta: '13 दिसं, 5pm तक', status: 'रोहित कुमार काम कर रहे हैं'
+    eta: '13 दिसं, 5pm तक'
   };
   setNetStatus('रोहित कुमार काम कर रहे हैं');
   showTicketLine(activeComplaint.engineer, activeComplaint.eta);
+  seedRechargeHistory();
+  await wait(400);
+  autoUserBubble();
   await wait(700);
   await showTyping(1300);
   addWiomMessage(
-    `<b>ठीक है — मौजूदा शिकायत में आपकी update जोड़ दी है।</b>\n\n` +
+    `<b>आपकी एक शिकायत पहले से खुली है।</b> 🙏\n\n` +
     `<b>शिकायत:</b> #${activeComplaint.id}\n` +
     `<b>स्थिति:</b> रोहित कुमार पहले से लगे हैं\n` +
-    `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।`,
+    `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
+    `नई शिकायत बनाने की ज़रूरत नहीं — समाधान का इंतज़ार करें।`,
     { cta: callEngineerCta() }
   );
   await wait(1200);
   addRestartCard();
 }
 
-async function stepBDifferent() {
-  addUserMessage('नई समस्या है', 'क्या यह वही समस्या है, या नई दिक्कत है?');
-  await wait(700);
-  await showTyping(1000);
-  addWiomMessage('ठीक है — फिर हम Step C पर जाते हैं (next gate)।');
-  await wait(900);
-  addRestartCard();
-}
-
-// ----- Step C · 48hr Resolved Reopen -----
-async function stepCFlow() {
+// Case C · Resolved within 48hr → reopen
+async function caseResolvedReopen() {
   setNetStatus('चालू है');
   seedRechargeHistory();
-
-  await wait(500);
+  await wait(400);
   autoUserBubble();
-  log('STEP_C', 'intent sent', false);
-
   await wait(700);
   await showTyping(1300);
-  addWiomWithSideBySide(
-    'कल आपकी समस्या — "<b>नेट नहीं चल रहा</b>" (शिकायत #612301) — सुलझाई गई थी। क्या वही दिक्कत वापस आई है?',
-    [
-      { label: 'हाँ, वही दिक्कत', onClick: () => stepCReopen() },
-      { label: 'नहीं, अलग है',     onClick: () => stepCDifferent() }
-    ]
+  addWiomMessage(
+    'कल आपकी समस्या — "<b>नेट नहीं चल रहा</b>" (शिकायत #612301) — सुलझाई गई थी।\n\n' +
+    'फिर वही दिक्कत वापस आई है — हम पिछली शिकायत पर फिर से काम शुरू कर रहे हैं।'
   );
-}
-
-async function stepCReopen() {
-  addUserMessage('हाँ, वही दिक्कत', 'क्या वही दिक्कत वापस आई है?');
+  await wait(1100);
+  await showTyping(1300);
   activeComplaint = {
     id: '612301', problem: 'नेट नहीं चल रहा', engineer: 'रोहित कुमार',
     eta: '13 दिसं, 5pm तक'
   };
   setNetStatus('समस्या पर फिर से काम शुरू');
   showTicketLine(activeComplaint.engineer, activeComplaint.eta);
-  await wait(700);
-  await showTyping(1300);
   addWiomMessage(
     buildTicketMessage({
       ticketId: activeComplaint.id,
@@ -2210,50 +2173,34 @@ async function stepCReopen() {
   addRestartCard();
 }
 
-async function stepCDifferent() {
-  addUserMessage('नहीं, अलग है', 'क्या वही दिक्कत वापस आई है?');
-  await wait(700);
-  await showTyping(1000);
-  addWiomMessage('ठीक है — फिर हम Step D पर जाते हैं (next gate)।');
-  await wait(900);
-  addRestartCard();
-}
-
-// ----- Step D · Router Ping + नेट बॉक्स Check (NEW) -----
-async function stepDFlow() {
+// Case D · Router ping fail + Netbox check
+async function caseNetboxCheck() {
   setNetStatus('चालू है');
   seedRechargeHistory();
-
-  await wait(500);
+  await wait(400);
   autoUserBubble();
-  log('STEP_D', 'intent sent', false);
-
   await wait(700);
   await showTyping(1300);
   addWiomMessage('एक सेकंड — आपके नेट बॉक्स तक हमारा signal देख रहे हैं…');
-
   await wait(800);
   await showTyping(1500);
   addStatusCheckMixed([
     { ok: true,  text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
     { ok: false, text: 'आपके नेट बॉक्स तक हमारा ping नहीं पहुँच रहा' }
   ]);
-  log('STEP_D', 'ping FAIL', true);
-
   await wait(1000);
   await showTyping(1200);
   addWiomWithSideBySide(
     'क्या आपका <b>नेट बॉक्स ON</b> है?',
     [
-      { label: 'हाँ, ON है',  onClick: () => stepDNetboxOn() },
-      { label: 'नहीं, OFF है', onClick: () => stepDNetboxOff() }
+      { label: 'हाँ, ON है',  onClick: () => caseNetboxOn() },
+      { label: 'नहीं, OFF है', onClick: () => caseNetboxOff() }
     ]
   );
 }
 
-async function stepDNetboxOn() {
+async function caseNetboxOn() {
   addUserMessage('हाँ, ON है', 'क्या आपका नेट बॉक्स ON है?');
-  log('STEP_D', 'netbox ON → fast-path service ticket', true);
   await wait(700);
   await showTyping(1400);
   addWiomMessage(
@@ -2280,9 +2227,8 @@ async function stepDNetboxOn() {
   addRestartCard();
 }
 
-async function stepDNetboxOff() {
+async function caseNetboxOff() {
   addUserMessage('नहीं, OFF है', 'क्या आपका नेट बॉक्स ON है?');
-  log('STEP_D', 'netbox OFF → instruct user', false);
   await wait(700);
   await showTyping(1500);
   addWiomMessage(
@@ -2293,25 +2239,25 @@ async function stepDNetboxOff() {
     'सब हो जाए तो नीचे का बटन दबाएं।',
     {
       media: true,
-      cta: [{ label: 'अब check करें', onClick: () => stepDRecheck() }]
+      cta: [{ label: 'अब check करें', onClick: () => caseNetboxRecheck() }]
     }
   );
 }
 
-async function stepDRecheck() {
+async function caseNetboxRecheck() {
   addUserMessage('अब check करें', 'सब हो जाए तो नीचे का बटन दबाएं।');
   await wait(700);
   await showTyping(1100);
   addWiomWithSideBySide(
     'क्या अब आपका नेट सही चल रहा है?',
     [
-      { label: 'हाँ',  onClick: () => stepDResolved() },
-      { label: 'नहीं', onClick: () => stepDStillDown() }
+      { label: 'हाँ',  onClick: () => caseNetboxResolved() },
+      { label: 'नहीं', onClick: () => caseNetboxStillDown() }
     ]
   );
 }
 
-async function stepDResolved() {
+async function caseNetboxResolved() {
   addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
   setNetStatus('चालू है');
   await wait(700);
@@ -2321,7 +2267,7 @@ async function stepDResolved() {
   addRestartCard();
 }
 
-async function stepDStillDown() {
+async function caseNetboxStillDown() {
   addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
   await wait(700);
   await showTyping(1400);
@@ -2329,192 +2275,6 @@ async function stepDStillDown() {
   activeComplaint = {
     id: ticketId, problem: 'नेट नहीं चल रहा', engineer: 'रोहित कुमार',
     eta: '13 दिसं, 5pm तक'
-  };
-  setNetStatus('शिकायत दर्ज हो गई');
-  showTicketLine(activeComplaint.engineer, activeComplaint.eta);
-  addWiomMessage(
-    buildTicketMessage({
-      ticketId, problem: 'नेट नहीं चल रहा'
-    }) +
-    `\n\nहम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।`,
-    { cta: callEngineerCta() }
-  );
-  await wait(1200);
-  addRestartCard();
-}
-
-// ----- Step E · Guided Troubleshoot -----
-async function stepEFlow() {
-  setNetStatus('चालू है');
-  seedRechargeHistory();
-
-  await wait(500);
-  autoUserBubble();
-  log('STEP_E', 'intent sent', false);
-
-  await wait(700);
-  await showTyping(1300);
-  addStatusCheckMixed([
-    { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
-    { ok: true, text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' }
-  ]);
-
-  await wait(900);
-  await showTyping(1400);
-  addWiomMessage(
-    'हमारी तरफ़ से सब ठीक दिख रहा है। एक बार ये जल्दी से कर लें — कई बार इन्हीं से नेट चल जाता है:\n\n' +
-    '<b>1.</b> देखें कि आप सही Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं\n' +
-    '<b>2.</b> नेट बॉक्स बंद-चालू करें — तार निकालें, <b>30 सेकंड</b> रुकें, वापस लगाएं\n' +
-    '<b>3.</b> लाइटें स्थिर हों, तो मोबाइल को दोबारा कनेक्ट करें\n\n' +
-    'सब करने के बाद नीचे का बटन दबाएं।',
-    {
-      media: true,
-      cta: [{ label: 'हो गया, अब चेक करते हैं', onClick: () => stepERecheck() }]
-    }
-  );
-}
-
-async function stepERecheck() {
-  addUserMessage('हो गया, अब चेक करते हैं', 'सब करने के बाद नीचे का बटन दबाएं।');
-  await wait(700);
-  await showTyping(1000);
-  addWiomWithSideBySide(
-    'क्या अब आपका नेट सही चल रहा है?',
-    [
-      { label: 'हाँ',  onClick: () => stepEResolved() },
-      { label: 'नहीं', onClick: () => stepEUnresolved() }
-    ]
-  );
-}
-
-async function stepEResolved() {
-  addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
-  await wait(700);
-  await showTyping(900);
-  addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं।');
-  await wait(900);
-  addRestartCard();
-}
-
-async function stepEUnresolved() {
-  addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
-  await wait(700);
-  await showTyping(900);
-  addWiomMessage('ठीक है — फिर हम Step F पर जाते हैं (category selection)।');
-  await wait(900);
-  addRestartCard();
-}
-
-// ----- Step F · Category + Subtype Selection -----
-const STEP_F_CATEGORIES = {
-  internet_down: {
-    label: 'नेट बंद है',
-    items: [
-      { key: 'supply_down',  label: 'पूरी तरह बंद',           subcat: 'INTERNET SUPPLY DOWN',     type: 3, queue: 'PARTNER' },
-      { key: 'recharge_dnw', label: 'रिचार्ज के बाद भी नहीं चला', subcat: 'RECHARGE DONE NOT WORKING', type: 3, queue: 'PARTNER' }
-    ]
-  },
-  slow: {
-    label: 'Slow / disconnect',
-    items: [
-      { key: 'frequent_disc', label: 'बार-बार disconnect',     subcat: 'FREQUENT DISCONNECTION',     type: 4, queue: 'PARTNER' },
-      { key: 'slow_speed',    label: 'Speed slow / Range कम',  subcat: 'SLOW SPEED / RANGE ISSUES', type: 4, queue: 'PARTNER' }
-    ]
-  },
-  signal: {
-    label: 'Signal issue',
-    items: [
-      { key: 'optical_power', label: 'Optical Power OOR', subcat: 'OPTICAL POWER OOR', type: 4, queue: 'PARTNER' },
-      { key: 'power_oor',     label: 'Power OOR',          subcat: 'POWER OOR',          type: 4, queue: 'PARTNER' }
-    ]
-  },
-  other: {
-    label: 'कुछ और',
-    items: [
-      { key: 'payment',  label: 'Payment / पैसा', subcat: 'PAYMENT',  type: 4, queue: 'CX' },
-      { key: 'shifting', label: 'घर बदलना है',     subcat: 'SHIFTING', type: 4, queue: 'CX' }
-    ]
-  }
-};
-
-async function stepFFlow() {
-  setNetStatus('चालू है');
-  seedRechargeHistory();
-
-  await wait(500);
-  autoUserBubble();
-  log('STEP_F', 'intent sent', false);
-
-  await wait(700);
-  await showTyping(1200);
-  addWiomMessage('troubleshoot fail हो गया — अब टिकट बनाते हैं। पहले बताइए, आपकी समस्या किस तरह की है?');
-  await wait(500);
-  addChipsRow([
-    { label: 'नेट बंद है',        onClick: () => stepFCategory('internet_down') },
-    { label: 'Slow / disconnect', onClick: () => stepFCategory('slow') },
-    { label: 'Signal issue',      onClick: () => stepFCategory('signal') },
-    { label: 'कुछ और',            onClick: () => stepFCategory('other') }
-  ]);
-}
-
-async function stepFCategory(catKey) {
-  const cat = STEP_F_CATEGORIES[catKey];
-  addUserMessage(cat.label);
-  await wait(700);
-  await showTyping(1100);
-  addWiomMessage('और detail में बताइए?');
-  await wait(500);
-  addChipsRow(cat.items.map(s => ({
-    label: s.label,
-    onClick: () => stepFSubtype(cat.label, s)
-  })));
-}
-
-async function stepFSubtype(catLabel, subtype) {
-  addUserMessage(subtype.label);
-  await wait(700);
-  await showTyping(1400);
-  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
-  activeComplaint = {
-    id: ticketId, problem: `${catLabel} · ${subtype.label}`,
-    engineer: subtype.queue === 'PARTNER' ? 'रोहित कुमार' : 'Wiom CX एजेंट',
-    eta: '13 दिसं, 5pm तक'
-  };
-  setNetStatus('शिकायत दर्ज हो गई');
-  showTicketLine(activeComplaint.engineer, activeComplaint.eta);
-  addWiomMessage(
-    buildTicketMessage({
-      ticketId,
-      problem: `${catLabel} · ${subtype.label}`,
-      type: subtype.type === 3 ? 'SERVICE · 4hr TAT' : 'OTHERS · 24hr TAT',
-      engineer: activeComplaint.engineer
-    }) +
-    `\n\n<b>Queue:</b> ${subtype.queue}`,
-    { cta: callEngineerCta() }
-  );
-  await wait(1200);
-  addRestartCard();
-}
-
-// ----- Step G/H · Create + Confirm Ticket -----
-async function stepGHFlow() {
-  setNetStatus('चालू है');
-  seedRechargeHistory();
-
-  await wait(500);
-  autoUserBubble();
-  log('STEP_GH', 'intent sent', false);
-
-  await wait(700);
-  await showTyping(1200);
-  addWiomMessage('Troubleshoot, category, subtype — सब हो गए। अब Kapture पर ticket बना रहे हैं…');
-
-  await wait(1000);
-  await showTyping(1500);
-  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
-  activeComplaint = {
-    id: ticketId, problem: 'नेट नहीं चल रहा',
-    engineer: 'रोहित कुमार', eta: '13 दिसं, 5pm तक'
   };
   setNetStatus('शिकायत दर्ज हो गई');
   showTicketLine(activeComplaint.engineer, activeComplaint.eta);
@@ -2527,163 +2287,192 @@ async function stepGHFlow() {
   addRestartCard();
 }
 
-// ----- Bonus · API Error -----
-async function bonusErrorFlow() {
-  setNetStatus('चालू है');
+// Case Wi-Fi · Fresh flow (with correct or wrong Wi-Fi status line)
+async function caseFreshFlow(correctWifi) {
+  setNetStatus('जाँच रहे हैं…');
   seedRechargeHistory();
-
-  // Seed prior chat: user typed intent, status check, issue picked, troubleshoot done
+  await wait(400);
   autoUserBubble();
+  await wait(700);
+  await showTyping(1200);
   addWiomMessage('अरे, आपका रिचार्ज तो <b>28 दिसंबर तक चालू</b> है — फिर भी दिक्कत? चलिए तुरंत देखते हैं।');
+  await wait(800);
+  await showTyping(1300);
   addStatusCheckMixed([
     { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
-    { ok: true, text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' }
+    correctWifi
+      ? { ok: true,  text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' }
+      : { ok: false, text: 'आप अपने Wi-Fi (Wiom Ramesh 1234) से नहीं जुड़े हैं' }
   ]);
-  const issueBubble = addWiomMessage('हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?', {
+  await wait(1000);
+  await showTyping(1000);
+  const intro = correctWifi
+    ? 'हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?'
+    : 'एक बात बताइए — दिक्कत क्या है?';
+  addWiomMessage(intro, {
     cta: [
-      { label: 'नेट नहीं चल रहा', onClick: () => {} },
-      { label: 'नेट रुक रुक कर चल रहा है', onClick: () => {} }
+      { label: 'नेट नहीं चल रहा',           onClick: () => caseFreshPickIssue('not_working',  'नेट नहीं चल रहा') },
+      { label: 'नेट रुक रुक कर चल रहा है', onClick: () => caseFreshPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
     ]
   });
-  issueBubble.querySelectorAll('.cta-link').forEach(el => el.classList.add('consumed'));
-  addUserMessage('नेट नहीं चल रहा', 'दिक्कत क्या है?');
+}
 
-  const tsBubble = addWiomMessage(
+async function caseFreshPickIssue(key, label) {
+  addUserMessage(label, 'दिक्कत क्या है?');
+  await wait(700);
+  await showTyping(1300);
+  addWiomMessage(
     'समझ गए। पहले ये जल्दी से कर लें — कई बार इन्हीं से नेट चल जाता है:\n\n' +
-    '<b>1.</b> देखें कि आप सही Wi-Fi से जुड़े हैं\n' +
-    '<b>2.</b> नेट बॉक्स बंद-चालू करें\n' +
-    '<b>3.</b> मोबाइल को दोबारा कनेक्ट करें\n\n' +
+    '<b>1.</b> देखें कि आप सही Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं\n' +
+    '<b>2.</b> नेट बॉक्स बंद-चालू करें — तार निकालें, <b>30 सेकंड</b> रुकें, वापस लगाएं\n' +
+    '<b>3.</b> लाइटें स्थिर हों, तो मोबाइल को दोबारा कनेक्ट करें\n\n' +
     'सब करने के बाद नीचे का बटन दबाएं।',
     {
       media: true,
-      cta: [{ label: 'हो गया, अब चेक करते हैं', onClick: () => {} }]
+      cta: [{ label: 'हो गया, अब चेक करते हैं', onClick: () => caseFreshStepsDone(key, label) }]
     }
   );
-  tsBubble.querySelectorAll('.cta-link').forEach(el => el.classList.add('consumed'));
+}
+
+async function caseFreshStepsDone(key, label) {
   addUserMessage('हो गया, अब चेक करते हैं', 'सब करने के बाद नीचे का बटन दबाएं।');
+  await wait(700);
+  await showTyping(1100);
   addWiomWithSideBySide('क्या अब आपका नेट सही चल रहा है?', [
-    { label: 'हाँ',  onClick: () => {} },
-    { label: 'नहीं', onClick: () => onBonusErrorFlow() }
+    { label: 'हाँ',  onClick: () => caseFreshRecheck(true,  key, label) },
+    { label: 'नहीं', onClick: () => caseFreshRecheck(false, key, label) }
   ]);
 }
 
-async function onBonusErrorFlow() {
+async function caseFreshRecheck(isYes, key, label) {
+  if (isYes) {
+    addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
+    setNetStatus('चालू है');
+    await wait(700);
+    await showTyping(900);
+    addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं।');
+    await wait(900);
+    addRestartCard();
+    return;
+  }
   addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
   await wait(700);
-  await showTyping(1500);
-  setNetStatus('मदद के लिए कॉल करें');
+  await showTyping(1300);
+  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
+  activeComplaint = {
+    id: ticketId, problem: label, engineer: 'रोहित कुमार',
+    eta: '13 दिसं, 5pm तक'
+  };
+  setNetStatus('शिकायत दर्ज हो गई');
+  showTicketLine(activeComplaint.engineer, activeComplaint.eta);
   addWiomMessage(
-    `माफ़ कीजिए — अभी हमारा शिकायत सिस्टम काम नहीं कर रहा, इसलिए आपकी शिकायत सेव नहीं हो पाई। 🙏\n\n` +
-    `<b>तब तक</b> इस नंबर पर कॉल करें — हमारा सपोर्ट एजेंट तुरंत आपकी मदद करेगा:\n` +
-    `<b>1800-123-4567</b>\n\n` +
-    `कॉल पर अपनी समस्या एक बार और बतानी पड़ेगी — हम जल्द से जल्द आपकी समस्या सुलझाने का प्रयास करेंगे।`,
-    { cta: [{ label: 'अभी कॉल करें', onClick: () => window.open('tel:18001234567') }] }
+    buildTicketMessage({ ticketId, problem: label }) +
+    `\n\nहम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।`,
+    { cta: callEngineerCta() }
   );
   await wait(1200);
   addRestartCard();
 }
 
-// ============ LINEAR STEP NAVIGATION (v5) ============
+// ============ GATES array (PRD decision tree) ============
 
-const STEPS = [
+const GATES = [
   {
     id: 'A',
-    num: 'Step A · Plan Active Check',
-    title: 'Plan active है या नहीं?',
-    desc: 'पहले हम check करते हैं कि आपका recharge active है या expire हो गया। अगर expire हो गया तो — रिचार्ज prompt आएगा, कोई शिकायत नहीं बनेगी। Active है तो — Step B पर जाते हैं।',
-    flow: stepAFlow
+    title: 'Gate A · Plan Active Check',
+    question: 'क्या आपका <b>plan active</b> है?',
+    desc: 'पहले हम check करते हैं — recharge है या expire हो गया। Expired → recharge prompt, कोई शिकायत नहीं। Active → next gate.',
+    yes: { label: 'YES — plan active', isAdvance: true },
+    no:  { label: 'NO — inactive', flow: caseInactivePlan }
   },
   {
     id: 'B',
-    num: 'Step B · Open Ticket Check',
-    title: 'पहले से शिकायत खुली है?',
-    desc: 'अगर पहले से Type 3/4 की शिकायत खुली है — Bot पूछता है "वही समस्या है, या नई?"। वही पर मौजूदा शिकायत में update जोड़ी जाती है। नई → Step C पर जाते हैं।',
-    flow: stepBFlow
+    title: 'Gate B · Open Ticket Check',
+    question: 'क्या <b>पहले से</b> कोई open शिकायत है?',
+    desc: 'अगर पहले से Type 3/4 शिकायत खुली है — bot बताता है कि उसी पर काम चल रहा है, नई नहीं बनती। नहीं → next gate.',
+    yes: { label: 'YES — open ticket exists', flow: caseOpenTicket },
+    no:  { label: 'NO — no open ticket', isAdvance: true }
   },
   {
     id: 'C',
-    num: 'Step C · 48hr Resolved Check',
-    title: 'कल हल हुई शिकायत वापस आई?',
-    desc: '48 घंटे में resolved हुई शिकायत (rating से close नहीं) — Bot पूछता है "वही दिक्कत वापस आई?"। हाँ → reopen। नहीं → Step D.',
-    flow: stepCFlow
+    title: 'Gate C · 48hr Resolved Check',
+    question: 'पिछले <b>48 घंटे</b> में कोई शिकायत हल हुई थी?',
+    desc: 'अगर हल हुई थी और customer ने rating से close नहीं की — bot उसी शिकायत को reopen करता है। नहीं → next gate.',
+    yes: { label: 'YES — resolved exists', flow: caseResolvedReopen },
+    no:  { label: 'NO — none', isAdvance: true }
   },
   {
     id: 'D',
-    num: 'Step D · Router Ping + नेट बॉक्स Check',
-    title: 'नेट बॉक्स तक connection है?',
-    desc: 'NAS ping fail। Bot पूछता है "क्या आपका नेट बॉक्स ON है?"। <b>हाँ</b> → service ticket तुरंत। <b>नहीं</b> → on करने और Wi-Fi connect करने को कहता है, फिर check → अगर तब भी नहीं चला, ticket बनती है।',
-    flow: stepDFlow
+    title: 'Gate D · Router Ping Check',
+    question: 'क्या <b>नेट बॉक्स तक</b> ping पहुँच रहा है?',
+    desc: 'Ping fail → bot पूछता है "नेट बॉक्स ON है?"। हाँ → service ticket तुरंत। नहीं → on + Wi-Fi connect + recheck → ticket if still down. YES → next gate.',
+    yes: { label: 'YES — ping received', isAdvance: true },
+    no:  { label: 'NO — ping failed', flow: caseNetboxCheck }
   },
   {
-    id: 'E',
-    num: 'Step E · Guided Troubleshoot',
-    title: 'Restart का guidance',
-    desc: 'User को नेट बॉक्स restart करने और Wi-Fi reconnect करने के step-by-step instructions। फिर recheck: हाँ → resolved, flow ends। नहीं → Step F पर जाते हैं।',
-    flow: stepEFlow
-  },
-  {
-    id: 'F',
-    num: 'Step F · Category + Subtype',
-    title: 'समस्या किस तरह की है?',
-    desc: '4 categories: नेट बंद / Slow-disconnect / Signal-power / कुछ और। Subtype चुनने पर appropriate ticket type (Type 3 या 4) और queue (PARTNER या CX) assign होती है।',
-    flow: stepFFlow
-  },
-  {
-    id: 'GH',
-    num: 'Step G/H · शिकायत बनी + Confirm',
-    title: 'शिकायत दर्ज + Confirmation',
-    desc: 'Backend Kapture पर ticket बनाता है। Chat में confirmation: शिकायत ID, समस्या, इंजीनियर, समाधान समय — सब show होता है। CTA: इंजीनियर को कॉल करें।',
-    flow: stepGHFlow
-  },
-  {
-    id: 'BONUS',
-    num: 'Bonus · API Error',
-    title: 'शिकायत नहीं बन पाई',
-    desc: 'Kapture API down — शिकायत save नहीं हो पाई। Bot honestly बताता है: support number पर call करें, समस्या एक बार और बतानी पड़ेगी।',
-    flow: bonusErrorFlow
+    id: 'WIFI',
+    title: 'Gate · सही Wi-Fi Check',
+    question: 'क्या user <b>सही Wi-Fi</b> से जुड़े हैं?',
+    desc: 'दोनों cases में flow एक जैसा है — सिर्फ status check में Wi-Fi line अलग दिखती है (✅ correct / ❌ wrong)। फिर standard troubleshoot → recheck → शिकायत.',
+    yes: { label: 'YES — correct Wi-Fi', flow: () => caseFreshFlow(true) },
+    no:  { label: 'NO — wrong Wi-Fi',    flow: () => caseFreshFlow(false) }
   }
 ];
 
-let currentStepIdx = -1;  // -1 = welcome screen
+let currentGateIdx = -1;
+let inCase = false;
 
-function updateStepIntro() {
-  const titleEl    = document.getElementById('stepTitle');
-  const subtitleEl = document.getElementById('stepSubtitle');
-  const numEl      = document.getElementById('stepCardNum');
-  const cardTitle  = document.getElementById('stepCardTitle');
-  const cardDesc   = document.getElementById('stepCardDesc');
-  const startBtn   = document.getElementById('stepStartBtn');
-
-  if (currentStepIdx < 0) {
-    titleEl.textContent = 'v5 — Linear Tour';
-    subtitleEl.textContent = 'PRD decision tree का linear demo · हर step अलग yellow screen पर खुलता है।';
-    numEl.textContent = 'Welcome';
-    cardTitle.textContent = 'Tour शुरू करें';
-    cardDesc.innerHTML = 'User types "मेरा नेट नहीं चल रहा" → system 8 gates के through walk करता है (A→H + bonus)। हर step अपना edge case demonstrate करता है। यह demo PRD decision tree v0.4 follow करता है।';
-    startBtn.textContent = 'Start tour';
-  } else if (currentStepIdx >= STEPS.length) {
-    titleEl.textContent = 'Tour complete';
-    subtitleEl.textContent = 'PRD decision tree का पूरा flow आपने देख लिया।';
-    numEl.textContent = '🎉 Done';
-    cardTitle.textContent = 'सब steps demo हो गए';
-    cardDesc.innerHTML = 'Welcome screen से फिर से शुरू कर सकते हैं, या किसी particular step पर रुक सकते हैं।';
-    startBtn.textContent = 'फिर से शुरू करें';
-  } else {
-    const step = STEPS[currentStepIdx];
-    titleEl.textContent = `Step ${step.id} · v5 Linear Tour`;
-    subtitleEl.textContent = `Step ${currentStepIdx + 1} of ${STEPS.length}`;
-    numEl.textContent = step.num;
-    cardTitle.textContent = step.title;
-    cardDesc.innerHTML = step.desc;
-    startBtn.textContent = `Step ${step.id} शुरू करें →`;
-  }
+function showWelcome() {
+  currentGateIdx = -1;
+  inCase = false;
+  document.getElementById('stepTitle').textContent = 'v5 — Decision Tree Walk';
+  document.getElementById('stepSubtitle').textContent = 'PRD decision tree का guided walk · हर gate पर YES/NO चुनें।';
+  document.getElementById('stepCardNum').textContent = 'Welcome';
+  document.getElementById('stepCardTitle').textContent = 'Tour शुरू करें';
+  document.getElementById('stepCardDesc').innerHTML = 'पहले आप "मेरा नेट नहीं चल रहा" type करेंगे। फिर हर PRD gate पर एक yellow screen आएगी जहाँ आप <b>YES/NO</b> चुनेंगे — पास option advance करता है, edge option case दिखाता है और वापस gate पर लौटाता है।';
+  document.getElementById('gateBtnSingle').style.display = '';
+  document.getElementById('gateBtnSingle').textContent = 'Start tour';
+  document.getElementById('gateBtnYes').style.display = 'none';
+  document.getElementById('gateBtnNo').style.display = 'none';
+  scenarioScreen.classList.remove('hidden', 'queued');
 }
 
-function startStep() {
-  if (currentStepIdx < 0 || currentStepIdx >= STEPS.length) {
-    currentStepIdx = 0;
+function showGate(idx) {
+  currentGateIdx = idx;
+  inCase = false;
+  if (idx >= GATES.length) {
+    showEnd();
+    return;
   }
-  const step = STEPS[currentStepIdx];
+  const gate = GATES[idx];
+  document.getElementById('stepTitle').textContent = `Decision Tree · ${idx + 1} of ${GATES.length}`;
+  document.getElementById('stepSubtitle').textContent = 'इस gate पर YES/NO में से एक चुनें';
+  document.getElementById('stepCardNum').textContent = gate.title;
+  document.getElementById('stepCardTitle').innerHTML = gate.question;
+  document.getElementById('stepCardDesc').innerHTML = gate.desc;
+  document.getElementById('gateBtnSingle').style.display = 'none';
+  document.getElementById('gateBtnYes').style.display = '';
+  document.getElementById('gateBtnNo').style.display = '';
+  document.getElementById('gateBtnYes').textContent = gate.yes.label;
+  document.getElementById('gateBtnNo').textContent = gate.no.label;
+  scenarioScreen.classList.remove('hidden', 'queued');
+}
+
+function showEnd() {
+  inCase = false;
+  document.getElementById('stepTitle').textContent = 'Tour complete';
+  document.getElementById('stepSubtitle').textContent = 'PRD decision tree का पूरा walk हो गया।';
+  document.getElementById('stepCardNum').textContent = '🎉 Done';
+  document.getElementById('stepCardTitle').textContent = 'सब gates देख लिए';
+  document.getElementById('stepCardDesc').innerHTML = 'फिर से शुरू कर सकते हैं।';
+  document.getElementById('gateBtnSingle').style.display = '';
+  document.getElementById('gateBtnSingle').textContent = 'फिर से शुरू करें';
+  document.getElementById('gateBtnYes').style.display = 'none';
+  document.getElementById('gateBtnNo').style.display = 'none';
+  scenarioScreen.classList.remove('hidden', 'queued');
+}
+
+function runCase(caseFlow) {
   scenarioScreen.classList.add('hidden');
   messages.innerHTML = '';
   logEntries.innerHTML = '';
@@ -2692,14 +2481,37 @@ function startStep() {
   activeComplaint = null;
   setNetStatus('चालू है');
   hideTicketLine();
-  step.flow();
+  inCase = true;
+  caseFlow();
 }
 
-function gotoNextStep() {
-  currentStepIdx++;
-  updateStepIntro();
-  scenarioScreen.classList.remove('hidden', 'queued');
+function onGateOption(opt) {
+  if (opt.isAdvance) {
+    showGate(currentGateIdx + 1);
+  } else if (opt.flow) {
+    runCase(opt.flow);
+  }
 }
+
+function onSingleBtn() {
+  if (currentGateIdx < 0) {
+    // Welcome → enter chat, user types intent
+    scenarioScreen.classList.add('hidden');
+    messages.innerHTML = '';
+    logEntries.innerHTML = '';
+    lastSender = null;
+    resetInputState();
+    activeComplaint = null;
+    setNetStatus('चालू है');
+    hideTicketLine();
+    inCase = false;
+    // User taps input → types → sends → onIntentSent → showGate(0)
+  } else {
+    // End → restart
+    showWelcome();
+  }
+}
+
 
 // ============ INPUT FIELD + KEYBOARD WIRING ============
 
@@ -2775,28 +2587,40 @@ function showContext() {
 }
 
 contextNextBtn.addEventListener('click', showScenarios);
-document.getElementById('stepStartBtn').addEventListener('click', startStep);
+document.getElementById('gateBtnSingle').addEventListener('click', onSingleBtn);
+document.getElementById('gateBtnYes').addEventListener('click', () => onGateOption(GATES[currentGateIdx].yes));
+document.getElementById('gateBtnNo').addEventListener('click',  () => onGateOption(GATES[currentGateIdx].no));
 
-// Override the end-of-chat restart card behavior:
-// In v5, the restart card becomes "Continue to next step →"
+// Override the end-of-chat restart card behavior — context-aware:
+// In a gate case → "← Back to Gate X"
+// Elsewhere (end of tour) → "Restart tour"
 const _originalAddRestartCard = addRestartCard;
 window.addRestartCard = function() {
   const card = document.createElement('div');
   card.className = 'restart-card bubble-enter';
-  const isLastStep = currentStepIdx >= STEPS.length - 1;
-  card.innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M5 12h14M13 6l6 6-6 6" stroke="#3f3249" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <span>${isLastStep ? 'Tour complete — finish' : 'Next step →'}</span>
-  `;
-  card.onclick = () => gotoNextStep();
+  if (inCase && currentGateIdx >= 0 && currentGateIdx < GATES.length) {
+    card.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M19 12H5M11 18l-6-6 6-6" stroke="#3f3249" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>← Back to Gate ${GATES[currentGateIdx].id}</span>
+    `;
+    card.onclick = () => { showGate(currentGateIdx); };
+  } else {
+    card.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 12a8 8 0 0 1 13.66-5.66M20 4v5h-5M20 12a8 8 0 0 1-13.66 5.66M4 20v-5h5" stroke="#3f3249" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Restart tour</span>
+    `;
+    card.onclick = () => { showWelcome(); };
+  }
   messages.appendChild(card);
   scrollToEnd();
 };
 
 // Initialize welcome state on the scenario screen
-updateStepIntro();
+showWelcome();
 
 // Do NOT auto-start chat — context screen is shown by default.
 
