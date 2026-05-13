@@ -1575,7 +1575,7 @@ async function onIntentSent() {
   log('ASK_ISSUE', 'awaiting 2-option pick', false);
 }
 
-// Issue picked → Step 2 (troubleshoot) → Step 3 (instant registration) → Step 4 (ownership+ETA) → Step 5 (auto progress)
+// Issue picked → troubleshoot with done-CTA → recheck gate → (resolved | ticket)
 async function onPickIssue(key, label) {
   addUserMessage(label, 'दिक्कत क्या है?');
   log('ASK_ISSUE', `→ ${label}`, false);
@@ -1583,19 +1583,61 @@ async function onPickIssue(key, label) {
   await wait(700);
   await showTyping(1300);
 
-  // ----- Step 2 · Quick troubleshoot (parallel self-help) -----
+  // ----- Step 2 · Troubleshoot with "हो गया" CTA -----
   addWiomMessage(
-    'समझ गए। पहले ये जल्दी से देख लें — कई बार इन्हीं से नेट चल जाता है:\n\n' +
+    'समझ गए। पहले ये जल्दी से कर लें — कई बार इन्हीं से नेट चल जाता है:\n\n' +
     '<b>1.</b> देखें कि आप सही Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं\n' +
     '<b>2.</b> नेट बॉक्स बंद-चालू करें — तार निकालें, <b>30 सेकंड</b> रुकें, वापस लगाएं\n' +
-    '<b>3.</b> लाइटें स्थिर हों, तो मोबाइल को दोबारा कनेक्ट करें',
-    { media: true }
+    '<b>3.</b> लाइटें स्थिर हों, तो मोबाइल को दोबारा कनेक्ट करें\n\n' +
+    'सब करने के बाद नीचे का बटन दबाएं।',
+    {
+      media: true,
+      cta: [
+        { label: 'हो गया, अब चेक करते हैं', onClick: () => onStepsDone(key, label) }
+      ]
+    }
   );
+  log('INSTRUCTIONS', 'awaiting steps-done tap', false);
+}
 
-  await wait(1400);
+// ----- Step 3 · Recheck gate -----
+async function onStepsDone(key, label) {
+  addUserMessage('हो गया, अब चेक करते हैं', 'सब करने के बाद नीचे का बटन दबाएं।');
+  log('STEPS_DONE', 'user reports steps done', false);
+
+  await wait(700);
+  await showTyping(1100);
+
+  addWiomWithSideBySide('क्या अब आपका नेट सही चल रहा है?', [
+    { label: 'हाँ',  onClick: () => onRecheck(true,  key, label) },
+    { label: 'नहीं', onClick: () => onRecheck(false, key, label) }
+  ]);
+  log('RECHECK', 'awaiting हाँ/नहीं', false);
+}
+
+async function onRecheck(isYes, key, label) {
+  if (isYes) {
+    addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
+    log('RECHECK', '→ self-resolved (no ticket)', false);
+    setNetStatus('चालू है');
+
+    await wait(700);
+    await showTyping(900);
+    addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं — हम तुरंत मदद करेंगे।');
+    log('COMPLETED', 'flow ended (self-resolved)', false);
+
+    await wait(600);
+    addRestartCard();
+    return;
+  }
+
+  // नहीं → create ticket
+  addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
+  log('RECHECK', '→ unresolved, creating ticket', false);
+
+  await wait(700);
   await showTyping(1300);
 
-  // ----- Step 3 · Instant complaint registration + Step 4 · Ownership/Resolution time -----
   const ticketId = String(Math.floor(600000 + Math.random() * 99999));
   activeComplaint = {
     id: ticketId,
@@ -1609,19 +1651,19 @@ async function onPickIssue(key, label) {
   showTicketLine(activeComplaint.team, activeComplaint.eta);
 
   addWiomMessage(
-    `<b>साथ ही — आपकी शिकायत दर्ज भी कर दी है।</b> 🙏\n\n` +
+    `<b>आपकी शिकायत दर्ज कर दी है।</b> 🙏\n\n` +
     `<b>टिकट:</b> #${ticketId}\n` +
     `<b>समस्या:</b> ${label}\n` +
     `<b>टीम:</b> रमेश नेटवर्क टीम\n` +
     `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
-    `आपको दोबारा बताने की ज़रूरत नहीं पड़ेगी — हमारी टीम पहले से ही लग गई है।`,
+    `आपको दोबारा बताने की ज़रूरत नहीं पड़ेगी — हमारी टीम लग गई है।`,
     {
       cta: [
         { label: 'इंजीनियर को कॉल करें', onClick: () => { window.open('tel:9876543210'); } }
       ]
     }
   );
-  log('TICKET', `instant #${ticketId} — ${PROBLEM_META[key]}`, true);
+  log('TICKET', `#${ticketId} — ${PROBLEM_META[key]}`, true);
   log('COMPLETED', 'ticket registered', false);
 
   await wait(800);
