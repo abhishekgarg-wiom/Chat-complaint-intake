@@ -324,6 +324,14 @@ body {
 .status-check-row + .status-check-row {
   margin-top: 0;
 }
+.status-check-row .status-emoji {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .status-check-row .check-badge {
   width: 16px;
   height: 16px;
@@ -1053,12 +1061,12 @@ body {
 
       <div class="context-block">
         <div class="context-q">इस स्टेप के बाद वर्मा जी क्या करेंगे?</div>
-        <div class="context-a">अगर समाधान हो गया — वापस अपने काम पर लौट जाएंगे। अगर नहीं हुआ — engineer के आने का इंतज़ार करेंगे और नेट सही होते ही व्योम से सूचना मिलेगी।</div>
+        <div class="context-a">अगर समाधान हो गया — वापस अपने काम पर लौट जाएंगे। अगर नहीं हुआ — इंजीनियर के आने का इंतज़ार करेंगे और नेट सही होते ही व्योम से सूचना मिलेगी।</div>
       </div>
 
       <div class="context-block">
         <div class="context-q">वर्मा जी को कैसा महसूस होगा अगर यह दुनिया का सबसे बेहतरीन डिज़ाइन हो?</div>
-        <div class="context-a">"मेरी बात सुनी गई।" कॉल करने का झंझट नहीं, बार-बार समझाने का बोझ नहीं। चैट में सीधा बता दिया गया — क्या हो रहा है, क्या करना है, और engineer काम कर रहे हैं या नहीं। बेफ़िक्र हो कर अपने काम पर लौट सकें।</div>
+        <div class="context-a">"मेरी बात सुनी गई।" कॉल करने का झंझट नहीं, बार-बार समझाने का बोझ नहीं। चैट में सीधा बता दिया गया — क्या हो रहा है, क्या करना है, और इंजीनियर काम कर रहे हैं या नहीं। बेफ़िक्र हो कर अपने काम पर लौट सकें।</div>
       </div>
     </div>
     <div class="context-cta-wrap">
@@ -1549,9 +1557,8 @@ function addStatusCheckMixed(items) {
   bubble.className = 'bubble';
   if (wrap.classList.contains('wiom-first')) bubble.classList.add('wiom-first');
   const rows = items.map(it => {
-    const cls = it.ok ? '' : 'fail';
-    const mark = it.ok ? '✓' : '!';
-    return `<div class="status-check-row"><span class="check-badge ${cls}">${mark}</span><span>${it.text}</span></div>`;
+    const mark = it.ok ? '✅' : '❌';
+    return `<div class="status-check-row"><span class="status-emoji">${mark}</span><span>${it.text}</span></div>`;
   }).join('');
   bubble.innerHTML = `<div class="content">${rows}</div><div class="timestamp">10:15 AM</div>`;
   wrap.appendChild(bubble);
@@ -1657,7 +1664,7 @@ async function runApiErrorFlow() {
   addStatusCheckMixed([
     { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
     { ok: true, text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' },
-    { ok: true, text: 'हमारे सर्वर तक connection ठीक है' }
+    { ok: true, text: 'हमारे सर्वर तक कनेक्शन ठीक है' }
   ]);
 
   const issueBubble = addWiomMessage('हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?', {
@@ -1716,10 +1723,10 @@ async function onApiErrorRecheck(isYes) {
   await showTyping(1500);
   setNetStatus('मदद के लिए कॉल करें');
   addWiomMessage(
-    `माफ़ कीजिए — अभी हमारा ticket system काम नहीं कर रहा। टिकट save नहीं हो पाया। 🙏\n\n` +
-    `<b>तब तक</b> इस number पर कॉल करें — हमारा support agent तुरंत मदद करेगा:\n` +
+    `माफ़ कीजिए — अभी हमारा टिकट सिस्टम काम नहीं कर रहा, इसलिए टिकट सेव नहीं हो पाया। 🙏\n\n` +
+    `<b>तब तक</b> इस नंबर पर कॉल करें — हमारा सपोर्ट एजेंट तुरंत मदद करेगा:\n` +
     `<b>1800-123-4567</b>\n\n` +
-    `Call पर अपनी समस्या एक बार और बतानी पड़ेगी — सीधे रोहित कुमार या support agent से बात करवा देंगे।`,
+    `कॉल पर अपनी समस्या एक बार और बतानी पड़ेगी — सीधे रोहित कुमार या सपोर्ट एजेंट से बात करवा देंगे।`,
     { cta: [{ label: 'अभी कॉल करें', onClick: () => window.open('tel:18001234567') }] }
   );
   log('COMPLETED', 'fallback to call', false);
@@ -1774,7 +1781,7 @@ async function freshAfterIntent() {
   addStatusCheckMixed([
     { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
     { ok: true, text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' },
-    { ok: true, text: 'हमारे सर्वर तक connection ठीक है' }
+    { ok: true, text: 'हमारे सर्वर तक कनेक्शन ठीक है' }
   ]);
   log('STATUS_CHECK', 'all ✓', true);
 
@@ -1865,7 +1872,7 @@ async function onRecheck(isYes, key, label) {
 
   addWiomMessage(
     buildTicketMessage({ ticketId, problem: label }) +
-    `\n\nआपको दोबारा बताने की ज़रूरत नहीं पड़ेगी — रोहित कुमार लग गए हैं।`,
+    `\n\nरोहित कुमार आपकी शिकायत पर लग गए हैं — आप निश्चिंत रहें, हम साथ हैं।`,
     { cta: callEngineerCta() }
   );
   log('TICKET', `#${ticketId} — ${PROBLEM_META[key]}`, true);
@@ -1947,9 +1954,9 @@ async function pingFailAfterIntent() {
   await wait(700);
   await showTyping(1500);
   addWiomMessage(
-    'आपके नेट बॉक्स तक हमारा signal नहीं पहुँच रहा — यह आपके इलाके की दिक्कत है (फाइबर cut / बिजली / NAS down)।\n\n' +
-    'ऐसे case में नेट बॉक्स restart करने का फायदा नहीं — सीधे रोहित कुमार को भेज रहे हैं।\n\n' +
-    'आपके इलाके में और customers की भी यही दिक्कत हो सकती है — engineer सबको एक साथ ठीक करेंगे।'
+    'आपके नेट बॉक्स तक हमारा सिग्नल नहीं पहुँच रहा — यह आपके इलाके की दिक्कत है (फाइबर कटा / बिजली / नेटवर्क बंद)।\n\n' +
+    'ऐसी स्थिति में नेट बॉक्स रीस्टार्ट करने का फायदा नहीं — सीधे रोहित कुमार को भेज रहे हैं।\n\n' +
+    'आपके इलाके में और ग्राहकों को भी यही दिक्कत हो सकती है — इंजीनियर सबको एक साथ ठीक करेंगे।'
   );
   log('STEP_D', 'ping FAIL — infrastructure explained', true);
 
@@ -2023,11 +2030,11 @@ async function returningActiveAfterIntent() {
 
   addWiomMessage(
     `वर्मा जी, हम समझ सकते हैं — परेशानी हो रही है। 🙏\n\n` +
-    `आपकी इसी शिकायत पर <b>पहले से काम चल रहा है</b> — दोबारा बताने की ज़रूरत नहीं।\n\n` +
+    `रोहित कुमार आपकी शिकायत पर <b>पहले से लगे हैं</b> — आप अकेले नहीं हैं, हम साथ में देख रहे हैं।\n\n` +
     `<b>टिकट:</b> #${activeComplaint.id}\n` +
     `<b>इंजीनियर:</b> रोहित कुमार\n` +
     `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
-    `अगर बहुत ज़रूरी हो तो रोहित जी को directly call कर लें — वही आपके इलाके में हैं।`,
+    `अगर मन में बेचैनी हो तो रोहित जी को सीधे कॉल कर लें — वही आपके इलाके में हैं, तुरंत बात होगी।`,
     { cta: callEngineerCta() }
   );
   log('COMPLETED', 'returning user calmed + offered call', false);
@@ -2070,12 +2077,12 @@ async function continuityAfterIntent() {
   await showTyping(1400);
 
   addWiomMessage(
-    `वर्मा जी, आपकी इसी शिकायत पर <b>पहले से काम चल रहा है</b> — दोबारा बताने की ज़रूरत नहीं।\n\n` +
+    `वर्मा जी, हम आपके साथ हैं — आपकी शिकायत पर <b>पहले से काम चल रहा है</b>। 🙏\n\n` +
     `<b>टिकट:</b> #${activeComplaint.id}\n` +
     `<b>समस्या:</b> ${activeComplaint.problem}\n` +
     `<b>इंजीनियर:</b> ${activeComplaint.engineer}\n` +
     `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
-    `अगर ज़रूरी हो तो रोहित जी को directly call कर लें — वही आपके इलाके में हैं।`,
+    `अगर मन में बेचैनी हो तो रोहित जी को सीधे कॉल कर लें — वही आपके इलाके में हैं।`,
     { cta: callEngineerCta() }
   );
   log('COMPLETED', 'continuity status surfaced', false);
