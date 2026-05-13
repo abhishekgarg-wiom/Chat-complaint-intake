@@ -1080,51 +1080,51 @@ body {
       <div class="scenario-title">v4 — Complaint intake flow</div>
       <div class="scenario-subtitle">Default flows + PRD edge cases · हर scenario अलग path दिखाती है।</div>
 
-      <div class="scenario-group-label">Default flows</div>
+      <div class="scenario-group-label">Default flow</div>
       <div class="scenario-card" id="scenario1Card" data-case="fresh">
         <div class="scenario-card-num">Case 1 · नई शिकायत</div>
         <div class="scenario-card-title">पहली बार चैट खोली है</div>
-        <div class="scenario-card-desc">User types "मेरा नेट नहीं चल रहा" → status check → issue pick → troubleshoot → recheck gate (हाँ/नहीं) → "नहीं" पर ticket बनता है (call CTA + 13 दिसंबर date)।</div>
+        <div class="scenario-card-desc">User types "मेरा नेट नहीं चल रहा" → status check → issue pick → troubleshoot → recheck gate (हाँ/नहीं) → "नहीं" पर शिकायत दर्ज होती है (call CTA + 13 दिसंबर date)।</div>
       </div>
 
-      <div class="scenario-card" id="scenario2Card" data-case="continuity">
-        <div class="scenario-card-num">Case 2 · वापस आए हैं</div>
+      <div class="scenario-group-label">Returning users</div>
+      <div class="scenario-card" id="scenario2Card" data-case="returning_active">
+        <div class="scenario-card-num">Case 2 · खुली शिकायत के साथ</div>
         <div class="scenario-card-title">पहले से active शिकायत है</div>
-        <div class="scenario-card-desc">User चैट खोलते हैं — sticky-bar में already engineer + ETA दिख रहा है। फिर कुछ type करके पूछते हैं → bot active शिकायत का status देता है। *आपको दोबारा बताने की ज़रूरत नहीं* का proof।</div>
+        <div class="scenario-card-desc">User की पहले से active शिकायत है। चैट खोलकर "मेरा नेट नहीं चल रहा" बोलते हैं। Sticky-bar पहले से engineer + ETA दिखा रहा है। Bot empathic रहता है: "रोहित कुमार पहले से लगे हैं, चाहें तो directly call करें।"</div>
       </div>
 
       <div class="scenario-group-label">Dedup · Step C</div>
-      <div class="scenario-card" id="scenario4Card" data-case="resolved_reopen">
-        <div class="scenario-card-num">Case 3 · Step C</div>
+      <div class="scenario-card" id="scenario3Card" data-case="resolved_reopen">
+        <div class="scenario-card-num">Case 3 · Resolved (पर closed नहीं)</div>
         <div class="scenario-card-title">कल हल हुई थी, फिर लौटी</div>
-        <div class="scenario-card-desc">48 घंटे में resolved ticket जो customer ने अभी तक rating देकर close नहीं किया। Bot सीधे पूछता है "कल आपकी शिकायत हल हुई थी — क्या वही दिक्कत वापस आई?" — हाँ पर पुराने engineer के साथ reopen।</div>
+        <div class="scenario-card-desc">48 घंटे में resolved शिकायत जो customer ने rating देकर close नहीं की। Bot सीधे पूछता है "कल आपकी समस्या सुलझाई गई थी — क्या वही दिक्कत वापस आई?" — हाँ पर reopen।</div>
+      </div>
+
+      <div class="scenario-card" id="scenario4Card" data-case="resolved_closed">
+        <div class="scenario-card-num">Case 4 · Resolved + closed</div>
+        <div class="scenario-card-title">पिछली शिकायत बंद कर दी थी</div>
+        <div class="scenario-card-desc">पिछली शिकायत हल हुई थी और user ने rating देकर close भी कर दी थी। अब नई दिक्कत आई — flow Case 1 की तरह fresh शुरू होता है, कोई reopen prompt नहीं।</div>
       </div>
 
       <div class="scenario-group-label">Diagnostics · Steps A, D</div>
       <div class="scenario-card" id="scenario5Card" data-case="ping_fail">
-        <div class="scenario-card-num">Case 4 · Step D fail</div>
+        <div class="scenario-card-num">Case 5 · Step D fail</div>
         <div class="scenario-card-title">इलाके में outage है</div>
-        <div class="scenario-card-desc">NAS ping FAIL — नेट बॉक्स unreachable। Bot troubleshoot skip करता है (restart से फायदा नहीं) और तुरंत <b>INTERNET SUPPLY DOWN</b> (Type 3, 4hr) ticket बना देता है।</div>
+        <div class="scenario-card-desc">NAS ping FAIL — नेट बॉक्स unreachable। Bot troubleshoot skip करता है (restart से फायदा नहीं) और तुरंत <b>INTERNET SUPPLY DOWN</b> (Type 3, 4hr) शिकायत बना देता है।</div>
       </div>
 
       <div class="scenario-card" id="scenario6Card" data-case="inactive_plan">
-        <div class="scenario-card-num">Case 5 · Step A</div>
+        <div class="scenario-card-num">Case 6 · Step A</div>
         <div class="scenario-card-title">रिचार्ज खत्म है</div>
         <div class="scenario-card-desc">INACTIVE plan। शिकायत flow शुरू नहीं होती — Bot सीधे रिचार्ज prompt भेजता है, क्योंकि बिना plan के नेट नहीं चलेगा।</div>
       </div>
 
       <div class="scenario-group-label">Errors · Step G</div>
-      <div class="scenario-card" id="scenario8Card" data-case="api_error">
-        <div class="scenario-card-num">Case 6 · Step G error</div>
-        <div class="scenario-card-title">Ticket नहीं बन पाया</div>
-        <div class="scenario-card-desc">User पहले से troubleshoot कर चुके हैं — चैट recheck gate पर है। "नहीं" बोलते ही ticket system down निकलता है। Bot honestly बताता है: support number पर call करें, समस्या एक बार और बतानी पड़ेगी।</div>
-      </div>
-
-      <div class="scenario-group-label">Returning users · Active ticket</div>
-      <div class="scenario-card" id="scenario9Card" data-case="returning_active">
-        <div class="scenario-card-num">Case 7 · Repetition</div>
-        <div class="scenario-card-title">खुली शिकायत — दोबारा complain</div>
-        <div class="scenario-card-desc">User की पहले से active शिकायत है। फिर भी चैट खोलकर "मेरा नेट नहीं चल रहा" दोबारा बोलते हैं। Bot empathic रहता है: "रोहित कुमार पहले से लगे हैं, चाहें तो directly call करें।"</div>
+      <div class="scenario-card" id="scenario7Card" data-case="api_error">
+        <div class="scenario-card-num">Case 7 · Step G error</div>
+        <div class="scenario-card-title">शिकायत नहीं बन पाई</div>
+        <div class="scenario-card-desc">User troubleshoot कर चुके हैं — चैट recheck पर है। "नहीं" बोलते ही शिकायत system down निकलता है। Bot honestly बताता है: support number पर call करें, समस्या एक बार और बतानी पड़ेगी।</div>
       </div>
     </div>
     <div class="context-cta-wrap"></div>
@@ -1576,7 +1576,7 @@ function buildTicketMessage({
   opening = 'आपकी शिकायत दर्ज कर दी है।'
 }) {
   let msg = `<b>${opening}</b> 🙏\n\n` +
-    `<b>टिकट:</b> #${ticketId}\n` +
+    `<b>शिकायत:</b> #${ticketId}\n` +
     `<b>समस्या:</b> ${problem}\n`;
   if (type) msg += `<b>Type:</b> ${type}\n`;
   msg += `<b>इंजीनियर:</b> ${engineer}\n` +
@@ -1584,8 +1584,8 @@ function buildTicketMessage({
   return msg;
 }
 
-function callEngineerCta(name = 'रोहित कुमार') {
-  return [{ label: `${name} को कॉल करें`, onClick: () => window.open('tel:9876543210') }];
+function callEngineerCta(label = 'इंजीनियर को कॉल करें') {
+  return [{ label, onClick: () => window.open('tel:9876543210') }];
 }
 
 // ============================================================================
@@ -1728,7 +1728,7 @@ async function onApiErrorRecheck(isYes) {
   await showTyping(1500);
   setNetStatus('मदद के लिए कॉल करें');
   addWiomMessage(
-    `माफ़ कीजिए — अभी हमारा टिकट सिस्टम काम नहीं कर रहा, इसलिए टिकट सेव नहीं हो पाया। 🙏\n\n` +
+    `माफ़ कीजिए — अभी हमारा शिकायत सिस्टम काम नहीं कर रहा, इसलिए आपकी शिकायत सेव नहीं हो पाई। 🙏\n\n` +
     `<b>तब तक</b> इस नंबर पर कॉल करें — हमारा सपोर्ट एजेंट तुरंत आपकी मदद करेगा:\n` +
     `<b>1800-123-4567</b>\n\n` +
     `कॉल पर अपनी समस्या एक बार और बतानी पड़ेगी — हम जल्द से जल्द आपकी समस्या सुलझाने का प्रयास करेंगे।`,
@@ -1762,7 +1762,7 @@ async function runReturningActiveFlow() {
 async function onIntentSent() {
   switch (currentScenario) {
     case 'fresh':            return freshAfterIntent();
-    case 'continuity':       return continuityAfterIntent();
+    case 'resolved_closed':  return freshAfterIntent();   // closed ticket → fresh flow
     case 'resolved_reopen':  return resolvedReopenAfterIntent();
     case 'ping_fail':        return pingFailAfterIntent();
     case 'inactive_plan':    return inactivePlanAfterIntent();
@@ -1897,7 +1897,7 @@ async function resolvedReopenAfterIntent() {
   await wait(700);
   await showTyping(1200);
   addWiomWithSideBySide(
-    'कल आपकी एक शिकायत (<b>#612301</b>) हल हुई थी — क्या वही दिक्कत वापस आई है?',
+    'कल आपकी समस्या — "<b>नेट नहीं चल रहा</b>" (शिकायत #612301) — सुलझाई गई थी। क्या वही दिक्कत वापस आई है?',
     [
       { label: 'हाँ, वही दिक्कत', onClick: () => onReopenSame() },
       { label: 'नहीं, अलग है',     onClick: () => onReopenDifferent() }
@@ -2040,7 +2040,7 @@ async function returningActiveAfterIntent() {
   addWiomMessage(
     `वर्मा जी, हम समझ सकते हैं — परेशानी हो रही है। 🙏\n\n` +
     `रोहित कुमार आपकी शिकायत पर <b>पहले से लगे हैं</b> — हम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।\n\n` +
-    `<b>टिकट:</b> #${activeComplaint.id}\n` +
+    `<b>शिकायत:</b> #${activeComplaint.id}\n` +
     `<b>इंजीनियर:</b> रोहित कुमार\n` +
     `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
     `अगर मन में बेचैनी हो तो रोहित जी को सीधे कॉल कर सकते हैं।`,
@@ -2058,58 +2058,33 @@ async function returningActiveAfterIntent() {
 // ============================================================================
 // CASE 2 — Continuity (user-triggered) · open ticket exists, user asks
 // ============================================================================
-async function runContinuityFlow() {
-  // Synthesize an active complaint (user already raised it earlier)
-  activeComplaint = {
-    id: '612345',
-    problem: 'नेट नहीं चल रहा',
-    engineer: 'रोहित कुमार',
-    eta: '13 दिसं, 5pm तक',
-    status: 'रोहित कुमार काम कर रहे हैं',
-    stage: 'in_progress'
-  };
-  setNetStatus(activeComplaint.status);
-  showTicketLine(activeComplaint.engineer, activeComplaint.eta);
+// ============================================================================
+// Case 4 (NEW) — Resolved + closed previous ticket → routes to fresh flow
+// ============================================================================
+async function runResolvedClosedFlow() {
+  activeComplaint = null;
+  setNetStatus('चालू है');
+  hideTicketLine();
 
-  // Seed prev-chat history, but DO NOT auto-show any summary.
-  // User must tap input → type intent → send. Then bot responds.
   seedRechargeHistory();
-
-  log('entry', 'continuity — open ticket exists, awaiting user input', false);
-}
-
-async function continuityAfterIntent() {
-  addUserMessage(INTENT_TEXT);
-  log('CONTINUITY', `user asked with open #${activeComplaint.id}`, false);
-
-  await wait(700);
-  await showTyping(1400);
-
+  addPrevChatCard('पिछली शिकायत आपने बंद कर दी थी');
   addWiomMessage(
-    `वर्मा जी, हम आपके साथ हैं — आपकी शिकायत पर <b>पहले से काम चल रहा है</b>। 🙏\n\n` +
-    `<b>टिकट:</b> #${activeComplaint.id}\n` +
-    `<b>समस्या:</b> ${activeComplaint.problem}\n` +
-    `<b>इंजीनियर:</b> ${activeComplaint.engineer}\n` +
-    `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
-    `अगर मन में बेचैनी हो तो रोहित जी को सीधे कॉल कर सकते हैं।`,
-    { cta: callEngineerCta() }
+    'आपकी पिछली शिकायत <b>#612290</b> हल हुई थी और आपने rating देकर बंद कर दी थी। 🙏\n\nधन्यवाद!'
   );
-  log('COMPLETED', 'continuity status surfaced', false);
 
-  await wait(800);
-  addRestartCard();
+  log('entry', 'resolved_closed — fresh flow on intent', false);
 }
 
 // ============ SCENARIO PICKER ============
 
 const SCENARIOS = {
   fresh:            runFreshFlow,
-  continuity:       runContinuityFlow,
+  returning_active: runReturningActiveFlow,
   resolved_reopen:  runResolvedReopenFlow,
+  resolved_closed:  runResolvedClosedFlow,
   ping_fail:        runPingFailFlow,
   inactive_plan:    runInactivePlanFlow,
-  api_error:        runApiErrorFlow,
-  returning_active: runReturningActiveFlow
+  api_error:        runApiErrorFlow
 };
 let currentScenario = 'fresh';
 
@@ -2211,12 +2186,12 @@ function pickScenario(caseName) {
 
 contextNextBtn.addEventListener('click', showScenarios);
 document.getElementById('scenario1Card').addEventListener('click', () => pickScenario('fresh'));
-document.getElementById('scenario2Card').addEventListener('click', () => pickScenario('continuity'));
-document.getElementById('scenario4Card').addEventListener('click', () => pickScenario('resolved_reopen'));
+document.getElementById('scenario2Card').addEventListener('click', () => pickScenario('returning_active'));
+document.getElementById('scenario3Card').addEventListener('click', () => pickScenario('resolved_reopen'));
+document.getElementById('scenario4Card').addEventListener('click', () => pickScenario('resolved_closed'));
 document.getElementById('scenario5Card').addEventListener('click', () => pickScenario('ping_fail'));
 document.getElementById('scenario6Card').addEventListener('click', () => pickScenario('inactive_plan'));
-document.getElementById('scenario8Card').addEventListener('click', () => pickScenario('api_error'));
-document.getElementById('scenario9Card').addEventListener('click', () => pickScenario('returning_active'));
+document.getElementById('scenario7Card').addEventListener('click', () => pickScenario('api_error'));
 
 // Override the end-of-chat restart card behavior:
 // instead of re-running the same scenario, return to the scenario chooser.
