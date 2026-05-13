@@ -1120,9 +1120,15 @@ body {
         <div class="scenario-card-desc">INACTIVE plan। शिकायत flow शुरू नहीं होती — Bot सीधे रिचार्ज prompt भेजता है, क्योंकि बिना plan के नेट नहीं चलेगा।</div>
       </div>
 
+      <div class="scenario-card" id="scenario7Card" data-case="wrong_wifi">
+        <div class="scenario-card-num">Case 7 · Wrong Wi-Fi</div>
+        <div class="scenario-card-title">गलत Wi-Fi से जुड़े हैं</div>
+        <div class="scenario-card-desc">Status check में पता चलता है — user अपने Wiom Wi-Fi से नहीं जुड़े (किसी और network पर या mobile data पर हैं)। Bot कहता है: "Wiom Ramesh 1234 से जुड़ें, नेट तुरंत चलने लगेगा।" अगर फिर भी दिक्कत → issue picker पर route।</div>
+      </div>
+
       <div class="scenario-group-label">Errors · Step G</div>
-      <div class="scenario-card" id="scenario7Card" data-case="api_error">
-        <div class="scenario-card-num">Case 7 · Step G error</div>
+      <div class="scenario-card" id="scenario8Card" data-case="api_error">
+        <div class="scenario-card-num">Case 8 · Step G error</div>
         <div class="scenario-card-title">शिकायत नहीं बन पाई</div>
         <div class="scenario-card-desc">User troubleshoot कर चुके हैं — चैट recheck पर है। "नहीं" बोलते ही शिकायत system down निकलता है। Bot honestly बताता है: support number पर call करें, समस्या एक बार और बतानी पड़ेगी।</div>
       </div>
@@ -1657,6 +1663,14 @@ async function runInactivePlanFlow() {
   log('entry', 'inactive_plan — awaiting intent', false);
 }
 
+async function runWrongWifiFlow() {
+  activeComplaint = null;
+  setNetStatus('चालू है');
+  hideTicketLine();
+  seedRechargeHistory();
+  log('entry', 'wrong_wifi — awaiting intent', false);
+}
+
 async function runApiErrorFlow() {
   activeComplaint = null;
   setNetStatus('जाँच पूरी — रिज़ल्ट का इंतज़ार');
@@ -1668,8 +1682,7 @@ async function runApiErrorFlow() {
   addWiomMessage('अरे, आपका रिचार्ज तो <b>28 दिसंबर तक चालू</b> है — फिर भी दिक्कत? चलिए तुरंत देखते हैं।');
   addStatusCheckMixed([
     { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
-    { ok: true, text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' },
-    { ok: true, text: 'हमारे सर्वर तक कनेक्शन ठीक है' }
+    { ok: true, text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' }
   ]);
 
   const issueBubble = addWiomMessage('हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?', {
@@ -1766,6 +1779,7 @@ async function onIntentSent() {
     case 'resolved_reopen':  return resolvedReopenAfterIntent();
     case 'ping_fail':        return pingFailAfterIntent();
     case 'inactive_plan':    return inactivePlanAfterIntent();
+    case 'wrong_wifi':       return wrongWifiAfterIntent();
     case 'returning_active': return returningActiveAfterIntent();
     default:                 return freshAfterIntent();
   }
@@ -1785,8 +1799,7 @@ async function freshAfterIntent() {
   await showTyping(1300);
   addStatusCheckMixed([
     { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
-    { ok: true, text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' },
-    { ok: true, text: 'हमारे सर्वर तक कनेक्शन ठीक है' }
+    { ok: true, text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' }
   ]);
   log('STATUS_CHECK', 'all ✓', true);
 
@@ -1963,7 +1976,7 @@ async function pingFailAfterIntent() {
   await showTyping(1500);
   addWiomMessage(
     'आपके नेट बॉक्स तक हमारा सिग्नल नहीं पहुँच रहा — यह आपके इलाके की दिक्कत है (फाइबर कटा / बिजली / नेटवर्क बंद)।\n\n' +
-    'ऐसी स्थिति में नेट बॉक्स रीस्टार्ट करने का फायदा नहीं — हम सीधे इंजीनियर को भेज रहे हैं।\n\n' +
+    'ऐसी स्थिति में नेट बॉक्स रीस्टार्ट करने का फायदा नहीं — इंजीनियर इसको ठीक कर रहे हैं।\n\n' +
     'आपके इलाके में और ग्राहकों को भी यही दिक्कत हो सकती है — इंजीनियर एक साथ देख रहे हैं।'
   );
   log('STEP_D', 'ping FAIL — infrastructure explained', true);
@@ -2043,7 +2056,7 @@ async function returningActiveAfterIntent() {
     `<b>शिकायत:</b> #${activeComplaint.id}\n` +
     `<b>इंजीनियर:</b> रोहित कुमार\n` +
     `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
-    `अगर मन में बेचैनी हो तो रोहित जी को सीधे कॉल कर सकते हैं।`,
+    `आप इंजीनियर को भी कॉल करके स्टेटस पूछ सकते हैं।`,
     { cta: callEngineerCta() }
   );
   log('COMPLETED', 'returning user calmed + offered call', false);
@@ -2058,6 +2071,68 @@ async function returningActiveAfterIntent() {
 // ============================================================================
 // CASE 2 — Continuity (user-triggered) · open ticket exists, user asks
 // ============================================================================
+// ============================================================================
+// Case 7 — Wrong Wi-Fi (user on different network / mobile data)
+// ============================================================================
+async function wrongWifiAfterIntent() {
+  addUserMessage(INTENT_TEXT);
+  setNetStatus('जाँच रहे हैं…');
+  log('entry', 'wrong_wifi — intent sent', false);
+
+  await wait(700);
+  await showTyping(1200);
+  addWiomMessage('एक सेकंड — आपका Wi-Fi कनेक्शन देख रहे हैं…');
+
+  await wait(800);
+  await showTyping(1300);
+  addStatusCheckMixed([
+    { ok: true,  text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
+    { ok: false, text: 'आप अपने Wi-Fi (Wiom Ramesh 1234) से नहीं जुड़े हैं' }
+  ]);
+  log('DIAGNOSTIC', 'wrong wifi detected', true);
+
+  await wait(1000);
+  await showTyping(1400);
+  addWiomMessage(
+    'आपका Wi-Fi है — <b>Wiom Ramesh 1234</b>\n\n' +
+    'लगता है आप अभी किसी और Wi-Fi से या mobile data पर हैं। मोबाइल की Wi-Fi list में जाकर <b>Wiom Ramesh 1234</b> से जुड़ें — नेट तुरंत चलने लगेगा।',
+    {
+      cta: [
+        { label: 'Wi-Fi से जुड़ गया',         onClick: () => onWifiConnected() },
+        { label: 'फिर भी नेट नहीं चल रहा', onClick: () => onWifiStillNotWorking() }
+      ]
+    }
+  );
+}
+
+async function onWifiConnected() {
+  addUserMessage('Wi-Fi से जुड़ गया', 'Wiom Ramesh 1234 से जुड़ें');
+  setNetStatus('चालू है');
+  log('DIAGNOSTIC', 'wrong wifi → self-resolved', false);
+
+  await wait(700);
+  await showTyping(900);
+  addWiomMessage('बढ़िया! 🎉\n\nअब नेट चलना चाहिए। और कोई दिक्कत हो तो यहीं बताएं।');
+  log('COMPLETED', 'wifi fix resolved', false);
+
+  await wait(600);
+  addRestartCard();
+}
+
+async function onWifiStillNotWorking() {
+  addUserMessage('फिर भी नेट नहीं चल रहा');
+  log('DIAGNOSTIC', 'wifi fix did not help → issue picker', false);
+
+  await wait(700);
+  await showTyping(1100);
+  addWiomMessage('ठीक है — बताइए, दिक्कत क्या है?', {
+    cta: [
+      { label: 'नेट नहीं चल रहा',           onClick: () => onPickIssue('not_working',  'नेट नहीं चल रहा') },
+      { label: 'नेट रुक रुक कर चल रहा है', onClick: () => onPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
+    ]
+  });
+}
+
 // ============================================================================
 // Case 4 (NEW) — Resolved + closed previous ticket → routes to fresh flow
 // ============================================================================
@@ -2084,6 +2159,7 @@ const SCENARIOS = {
   resolved_closed:  runResolvedClosedFlow,
   ping_fail:        runPingFailFlow,
   inactive_plan:    runInactivePlanFlow,
+  wrong_wifi:       runWrongWifiFlow,
   api_error:        runApiErrorFlow
 };
 let currentScenario = 'fresh';
@@ -2191,7 +2267,8 @@ document.getElementById('scenario3Card').addEventListener('click', () => pickSce
 document.getElementById('scenario4Card').addEventListener('click', () => pickScenario('resolved_closed'));
 document.getElementById('scenario5Card').addEventListener('click', () => pickScenario('ping_fail'));
 document.getElementById('scenario6Card').addEventListener('click', () => pickScenario('inactive_plan'));
-document.getElementById('scenario7Card').addEventListener('click', () => pickScenario('api_error'));
+document.getElementById('scenario7Card').addEventListener('click', () => pickScenario('wrong_wifi'));
+document.getElementById('scenario8Card').addEventListener('click', () => pickScenario('api_error'));
 
 // Override the end-of-chat restart card behavior:
 // instead of re-running the same scenario, return to the scenario chooser.
