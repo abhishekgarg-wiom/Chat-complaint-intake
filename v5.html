@@ -2391,16 +2391,16 @@ const GATES = [
     title: 'Gate B · Open Ticket Check',
     question: 'क्या <b>पहले से</b> कोई open शिकायत है?',
     desc: 'अगर पहले से Type 3/4 शिकायत खुली है — bot बताता है कि उसी पर काम चल रहा है, नई नहीं बनती। नहीं → next gate.',
-    yes: { label: 'YES — open ticket exists', flow: caseOpenTicket },
-    no:  { label: 'NO — no open ticket', isAdvance: true }
+    yes: { label: 'NO — no open ticket', isAdvance: true },
+    no:  { label: 'YES — open ticket exists', flow: caseOpenTicket }
   },
   {
     id: 'C',
     title: 'Gate C · 48hr Resolved Check',
     question: 'पिछले <b>48 घंटे</b> में कोई शिकायत हल हुई थी?',
     desc: 'अगर हल हुई थी और customer ने rating से close नहीं की — bot उसी शिकायत को reopen करता है। नहीं → next gate.',
-    yes: { label: 'YES — resolved exists', flow: caseResolvedReopen },
-    no:  { label: 'NO — none', isAdvance: true }
+    yes: { label: 'NO — none', isAdvance: true },
+    no:  { label: 'YES — resolved exists', flow: caseResolvedReopen }
   },
   {
     id: 'D',
