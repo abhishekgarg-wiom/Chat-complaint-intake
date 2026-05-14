@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Design PRD — Automated Complaint Intake via Chat (v5)</title>
+<title>Design PRD — Automated Complaint Intake via Chat</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -118,6 +118,37 @@
   .toc ol { margin: 4px 0 0; padding-left: 22px; }
   .toc a { color: #D9008D; text-decoration: none; }
   .toc a:hover { text-decoration: underline; }
+  .jtbd-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 10px 0 6px;
+  }
+  .jtbd {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px 14px;
+    background: #fcfcfc;
+  }
+  .jtbd-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 4px;
+  }
+  .jtbd p { margin: 0; font-size: 13.5px; line-height: 1.55; }
+  .jtbd.framing {
+    grid-column: 1 / -1;
+    background: #fff8d6;
+    border-left: 3px solid #D9008D;
+  }
+  .jtbd-persona {
+    font-size: 13.5px;
+    color: #444;
+    margin: 6px 0 12px;
+  }
   @media print {
     body { padding: 24px 32px; font-size: 12.5px; }
     h2 { page-break-after: avoid; }
@@ -129,10 +160,9 @@
 
 <h1>Design PRD — Automated Complaint Intake via Chat</h1>
 <div class="meta">
-  <b>Version:</b> v5 (design-side) &nbsp;·&nbsp;
   <b>Date:</b> 2026-05-14 &nbsp;·&nbsp;
   <b>Owner:</b> Design (Abhishek) &nbsp;·&nbsp;
-  <b>Source Prototype:</b> <a href="https://abhishekgarg-wiom.github.io/Chat-complaint-intake/v5.html">v5.html</a> &nbsp;·&nbsp;
+  <b>Prototype:</b> <a href="https://abhishekgarg-wiom.github.io/Chat-complaint-intake/v5.html">Chat prototype</a> &nbsp;·&nbsp;
   <b>Reference:</b> Product PRD (Namrata, CX-1030, 2026-05-07)
 </div>
 
@@ -140,14 +170,15 @@
   <b>Contents</b>
   <ol>
     <li><a href="#problem">Problem Statement</a></li>
+    <li><a href="#jtbd">Jobs To Be Done</a></li>
     <li><a href="#objective">Objective</a></li>
     <li><a href="#scope">Scope</a></li>
     <li><a href="#metrics">Success Metrics</a></li>
     <li><a href="#principles">Design Principles</a></li>
     <li><a href="#tree">Decision Tree</a></li>
-    <li><a href="#journeys">User Journeys (v5 Cases)</a></li>
+    <li><a href="#journeys">User Journeys</a></li>
     <li><a href="#patterns">Common UI Patterns</a></li>
-    <li><a href="#oos">Out of Scope (v5)</a></li>
+    <li><a href="#oos">Out of Scope</a></li>
   </ol>
 </div>
 
@@ -155,7 +186,36 @@
 <p>Today, when an ACTIVE or INACTIVE user says <i>"mera net nahi chal raha"</i> (or any seekHelp variant), the chat system routes to a static "Call us" response. No diagnostics, no ticket creation, no self-service. ~1,076 such messages per day in ACTIVE, ~28% frustrated, ~143/day get stuck in repetition loops.</p>
 <p><b>What we're solving:</b> replace the dead-end with a multi-step chat that diagnoses, de-duplicates against existing tickets, guides a restart, and creates the right ticket in Kapture.</p>
 
-<h2 id="objective">2. Objective</h2>
+<h2 id="jtbd">2. Jobs To Be Done</h2>
+<div class="jtbd-persona"><b>User:</b> वर्मा परिवार</div>
+<div class="jtbd-grid">
+  <div class="jtbd">
+    <div class="jtbd-title">🎯 Functional</div>
+    <p>जब मैं चैट पर अपनी दिक्कत बताऊँ, तो मेरी दिक्कत तुरंत रजिस्टर हो जाए और उस पर काम शुरू हो जाए, ताकि मुझे कॉल करके दोबारा वही बात न बतानी पड़े।</p>
+  </div>
+  <div class="jtbd">
+    <div class="jtbd-title">💛 Emotional</div>
+    <p>जब मेरे इंटरनेट में कोई दिक्कत होती है, तब मैं चाहता हूँ कि मुझे लगे कि मेरी समस्या पर तुरंत ध्यान दिया जा रहा है, ताकि मैं frustration, ignored या helpless महसूस न करूँ।</p>
+  </div>
+  <div class="jtbd">
+    <div class="jtbd-title">👥 Social</div>
+    <p>जब मेरे इंटरनेट में कोई दिक्कत आए, तो मैं चाहता हूँ कि वह जल्दी और आसानी से सुलझ जाए, ताकि मेरे परिवार के लोगों का काम न रुके और मुझे बार‑बार समझाना न पड़े।</p>
+  </div>
+  <div class="jtbd">
+    <div class="jtbd-title">🏢 Wiom System Objective</div>
+    <p>जब वर्मा परिवार chat पर अपनी समस्या बताता है, तब व्योम को उस समस्या को तुरंत system में दर्ज कर उसे सही टीम तक पहुँचाना चाहिए, ताकि complaint का clear ownership बने, repeat effort की जरूरत न पड़े, और silent churn कम हो।</p>
+  </div>
+  <div class="jtbd">
+    <div class="jtbd-title">⚙️ CSP Execution Requirement</div>
+    <p>जब chat के माध्यम से complaint आए, तब CSP को एक साफ, structured और actionable जानकारी मिलनी चाहिए, ताकि वे बिना दोबारा पूछे सीधे समाधान पर काम शुरू कर सकें।</p>
+  </div>
+  <div class="jtbd framing">
+    <div class="jtbd-title">🧠 Clean Framing</div>
+    <p>जब customer chat पर internet issue बताता है लेकिन उसकी complaint system में दर्ज नहीं होती, तब वह या तो बार‑बार कोशिश करता है या बिना समाधान के छोड़ देता है। व्योम का काम इस dead-end को clear ownership और actionable resolution में बदलना है।</p>
+  </div>
+</div>
+
+<h2 id="objective">3. Objective</h2>
 <ul>
   <li><b>Deduplicate</b> — check for open / 48hr-resolved tickets before creating a new one.</li>
   <li><b>Diagnose</b> — ping the netbox to know if it's a device or supply-side issue.</li>
@@ -164,7 +224,7 @@
   <li><b>Confirm</b> — show the ticket and route the call CTA to the assigned engineer / partner.</li>
 </ul>
 
-<h2 id="scope">3. Scope</h2>
+<h2 id="scope">4. Scope</h2>
 <table>
   <tr><th>Item</th><th>Detail</th></tr>
   <tr><td>States</td><td>ACTIVE_PRE_EXPIRY, ACTIVE_PUTCREATED, INACTIVE_POST_EXPIRY</td></tr>
@@ -175,7 +235,7 @@
   <tr><td>Track complaint</td><td>Not part of this flow — handled by the existing post-ticket experience</td></tr>
 </table>
 
-<h2 id="metrics">4. Success Metrics</h2>
+<h2 id="metrics">5. Success Metrics</h2>
 <table>
   <tr><th>Metric</th><th>Current</th><th>Target</th></tr>
   <tr><td>seekHelp → "Call us" rate</td><td>100%</td><td>&lt; 10%</td></tr>
@@ -187,7 +247,7 @@
   <tr><td>Avg time to ticket</td><td>—</td><td>&lt; 3 min</td></tr>
 </table>
 
-<h2 id="principles">5. Design Principles</h2>
+<h2 id="principles">6. Design Principles</h2>
 <ul>
   <li><b>Reduce uncertainty</b> — every diagnostic step is shown to the user (status check rows with ✅ / ❌).</li>
   <li><b>Clarify system state</b> — sticky top-of-chat status bar always reflects current net status + active ticket.</li>
@@ -196,7 +256,7 @@
   <li><b>Empathetic Hindi tone</b> — never ordering, never dismissive; acknowledge before instructing.</li>
 </ul>
 
-<h2 id="tree">6. Decision Tree</h2>
+<h2 id="tree">7. Decision Tree</h2>
 <p>Linear gate walk after the user says "मेरा नेट नहीं चल रहा":</p>
 <table>
   <tr><th>Gate</th><th>Check</th><th>YES path (advance)</th><th>NO path (branch)</th></tr>
@@ -207,7 +267,7 @@
   <tr><td><b>Wi-Fi</b></td><td>Connected to correct Wi-Fi?</td><td>Status check ✅ → ask issue → troubleshoot</td><td>Status check ❌ → ask issue → troubleshoot (Wi-Fi correction first)</td></tr>
 </table>
 
-<h2 id="journeys">7. User Journeys (v5 Cases)</h2>
+<h2 id="journeys">8. User Journeys</h2>
 
 <div class="journey">
   <div class="gate">Gate A pass · Gate B pass · Gate C pass · Gate D pass · Wi-Fi pass</div>
@@ -295,7 +355,7 @@
   </ol>
 </div>
 
-<h2 id="patterns">8. Common UI Patterns</h2>
+<h2 id="patterns">9. Common UI Patterns</h2>
 <table>
   <tr><th>Pattern</th><th>Used when</th></tr>
   <tr><td><b>Sticky status bar</b> (top of chat)</td><td>Always — shows current net status + active ticket line (engineer, ETA) once a ticket exists.</td></tr>
@@ -308,7 +368,7 @@
   <tr><td><b>Restart card</b></td><td>Last bubble of every closed journey — lets the user restart the chat from scratch.</td></tr>
 </table>
 
-<h2 id="oos">9. Out of Scope (v5)</h2>
+<h2 id="oos">10. Out of Scope</h2>
 <ul>
   <li>Pre-booking / pre-install states (different seekHelp meaning).</li>
   <li>Callback scheduling, IVR integration, technician dispatch from chat.</li>
