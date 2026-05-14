@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Design PRD — Automated Complaint Intake via Chat (v5)</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1a1a1a;
+    line-height: 1.55;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 48px 56px 96px;
+    background: #fff;
+    font-size: 14.5px;
+  }
+  h1 {
+    font-size: 26px;
+    margin: 0 0 6px;
+    color: #111;
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    font-size: 19px;
+    margin: 32px 0 10px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid #D9008D;
+    color: #111;
+  }
+  h3 {
+    font-size: 15.5px;
+    margin: 18px 0 4px;
+    color: #111;
+  }
+  .meta {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .meta b { color: #333; }
+  p { margin: 6px 0 10px; }
+  ul, ol { margin: 6px 0 12px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 14px;
+    font-size: 13.5px;
+  }
+  th, td {
+    text-align: left;
+    padding: 7px 10px;
+    border: 1px solid #e0e0e0;
+    vertical-align: top;
+  }
+  th {
+    background: #fafafa;
+    font-weight: 600;
+    color: #222;
+  }
+  code, .mono {
+    font-family: "SF Mono", Consolas, Menlo, monospace;
+    font-size: 12.5px;
+    background: #f5f5f7;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #c2185b;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 11px;
+    background: #FFE066;
+    color: #111;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+  .pill.brand { background: #D9008D; color: #fff; }
+  .pill.green { background: #10b981; color: #fff; }
+  .pill.gray  { background: #e5e5e5; color: #333; }
+  .journey {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0 16px;
+    background: #fcfcfc;
+  }
+  .journey h3 { margin-top: 0; }
+  .journey .gate {
+    font-size: 12px;
+    color: #777;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .arrow { color: #999; }
+  .callout {
+    background: #fff8d6;
+    border-left: 3px solid #D9008D;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 13.5px;
+    border-radius: 0 6px 6px 0;
+  }
+  .toc {
+    background: #fafafa;
+    border: 1px solid #e5e5e5;
+    padding: 12px 18px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+    font-size: 13.5px;
+  }
+  .toc ol { margin: 4px 0 0; padding-left: 22px; }
+  .toc a { color: #D9008D; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  @media print {
+    body { padding: 24px 32px; font-size: 12.5px; }
+    h2 { page-break-after: avoid; }
+    .journey { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Design PRD — Automated Complaint Intake via Chat</h1>
+<div class="meta">
+  <b>Version:</b> v5 (design-side) &nbsp;·&nbsp;
+  <b>Date:</b> 2026-05-14 &nbsp;·&nbsp;
+  <b>Owner:</b> Design (Abhishek) &nbsp;·&nbsp;
+  <b>Source Prototype:</b> <a href="https://abhishekgarg-wiom.github.io/Chat-complaint-intake/v5.html">v5.html</a> &nbsp;·&nbsp;
+  <b>Reference:</b> Product PRD (Namrata, CX-1030, 2026-05-07)
+</div>
+
+<div class="toc">
+  <b>Contents</b>
+  <ol>
+    <li><a href="#problem">Problem Statement</a></li>
+    <li><a href="#objective">Objective</a></li>
+    <li><a href="#scope">Scope</a></li>
+    <li><a href="#metrics">Success Metrics</a></li>
+    <li><a href="#principles">Design Principles</a></li>
+    <li><a href="#tree">Decision Tree</a></li>
+    <li><a href="#journeys">User Journeys (v5 Cases)</a></li>
+    <li><a href="#patterns">Common UI Patterns</a></li>
+    <li><a href="#oos">Out of Scope (v5)</a></li>
+  </ol>
+</div>
+
+<h2 id="problem">1. Problem Statement</h2>
+<p>Today, when an ACTIVE or INACTIVE user says <i>"mera net nahi chal raha"</i> (or any seekHelp variant), the chat system routes to a static "Call us" response. No diagnostics, no ticket creation, no self-service. ~1,076 such messages per day in ACTIVE, ~28% frustrated, ~143/day get stuck in repetition loops.</p>
+<p><b>What we're solving:</b> replace the dead-end with a multi-step chat that diagnoses, de-duplicates against existing tickets, guides a restart, and creates the right ticket in Kapture.</p>
+
+<h2 id="objective">2. Objective</h2>
+<ul>
+  <li><b>Deduplicate</b> — check for open / 48hr-resolved tickets before creating a new one.</li>
+  <li><b>Diagnose</b> — ping the netbox to know if it's a device or supply-side issue.</li>
+  <li><b>Self-serve</b> — guide a restart / Wi-Fi correction before escalating.</li>
+  <li><b>Auto-ticket</b> — create the ticket with full context.</li>
+  <li><b>Confirm</b> — show the ticket and route the call CTA to the assigned engineer / partner.</li>
+</ul>
+
+<h2 id="scope">3. Scope</h2>
+<table>
+  <tr><th>Item</th><th>Detail</th></tr>
+  <tr><td>States</td><td>ACTIVE_PRE_EXPIRY, ACTIVE_PUTCREATED, INACTIVE_POST_EXPIRY</td></tr>
+  <tr><td>Intent</td><td>seekHelp (incl. repetition_breaker_seekHelp, help_requested_frustrated)</td></tr>
+  <tr><td>Language</td><td>Hindi (Devanagari, with English tech words transliterated — "नेट", "नेट बॉक्स", "connect", "system")</td></tr>
+  <tr><td>Ticket types</td><td>SERVICE (Type 3, 4hr TAT) · OTHERS (Type 4, 24hr TAT) — existing Kapture types</td></tr>
+  <tr><td>Call CTA</td><td>Existing logic — routes to the engineer / partner / Wiom owner of the active ticket</td></tr>
+  <tr><td>Track complaint</td><td>Not part of this flow — handled by the existing post-ticket experience</td></tr>
+</table>
+
+<h2 id="metrics">4. Success Metrics</h2>
+<table>
+  <tr><th>Metric</th><th>Current</th><th>Target</th></tr>
+  <tr><td>seekHelp → "Call us" rate</td><td>100%</td><td>&lt; 10%</td></tr>
+  <tr><td>Self-resolution rate</td><td>0%</td><td>&gt; 15%</td></tr>
+  <tr><td>Ticket auto-creation rate</td><td>0 / day</td><td>&gt; 500 / day</td></tr>
+  <tr><td>Duplicate tickets avoided</td><td>Unknown</td><td>Measurable (flow exits at Gate B or C)</td></tr>
+  <tr><td>ACTIVE frustration rate</td><td>28%</td><td>&lt; 20%</td></tr>
+  <tr><td>Repetition-breaker rate</td><td>143 / day</td><td>&lt; 50 / day</td></tr>
+  <tr><td>Avg time to ticket</td><td>—</td><td>&lt; 3 min</td></tr>
+</table>
+
+<h2 id="principles">5. Design Principles</h2>
+<ul>
+  <li><b>Reduce uncertainty</b> — every diagnostic step is shown to the user (status check rows with ✅ / ❌).</li>
+  <li><b>Clarify system state</b> — sticky top-of-chat status bar always reflects current net status + active ticket.</li>
+  <li><b>Coordinate the next action</b> — every bot turn ends with either a clear CTA, a side-by-side choice, or a closing message + restart card.</li>
+  <li><b>Maintain continuity</b> — ticket info (engineer name, ETA) carries forward across the conversation once created.</li>
+  <li><b>Empathetic Hindi tone</b> — never ordering, never dismissive; acknowledge before instructing.</li>
+</ul>
+
+<h2 id="tree">6. Decision Tree</h2>
+<p>Linear gate walk after the user says "मेरा नेट नहीं चल रहा":</p>
+<table>
+  <tr><th>Gate</th><th>Check</th><th>YES path (advance)</th><th>NO path (branch)</th></tr>
+  <tr><td><b>A</b></td><td>Plan active?</td><td>→ Gate B</td><td>Recharge prompt, flow ends</td></tr>
+  <tr><td><b>B</b></td><td>Any open ticket?</td><td>→ Gate C</td><td>Show existing ticket + Call CTA, no new ticket</td></tr>
+  <tr><td><b>C</b></td><td>Any ticket resolved in last 48 hr?</td><td>→ Gate D</td><td>Ask "same issue?" → reopen, OR "different" → check ping</td></tr>
+  <tr><td><b>D</b></td><td>Ping reaches netbox?</td><td>→ Wi-Fi check</td><td>Ask "नेट बॉक्स ON है?" → guide / fast-path service ticket</td></tr>
+  <tr><td><b>Wi-Fi</b></td><td>Connected to correct Wi-Fi?</td><td>Status check ✅ → ask issue → troubleshoot</td><td>Status check ❌ → ask issue → troubleshoot (Wi-Fi correction first)</td></tr>
+</table>
+
+<h2 id="journeys">7. User Journeys (v5 Cases)</h2>
+
+<div class="journey">
+  <div class="gate">Gate A pass · Gate B pass · Gate C pass · Gate D pass · Wi-Fi pass</div>
+  <h3>7.1 Happy flow <span class="pill green">default</span></h3>
+  <p><b>Trigger:</b> Active user, no open ticket, no recent resolved ticket, ping OK, on correct Wi-Fi.</p>
+  <ol>
+    <li>User types intent → bot acknowledges plan is active.</li>
+    <li>Bot runs a visible status check (✅ recharge, ✅ Wi-Fi).</li>
+    <li>Bot asks "दिक्कत क्या है?" with 2 issue options.</li>
+    <li>Bot shows guided steps (restart netbox, reconnect Wi-Fi) with a single "हो गया, चेक करते हैं" CTA.</li>
+    <li>Bot asks "अब सही चल रहा है?" <span class="arrow">→</span> <b>हाँ:</b> close with success message · <b>नहीं:</b> create ticket, show ticket card + Call CTA.</li>
+  </ol>
+</div>
+
+<div class="journey">
+  <div class="gate">Gate A fail</div>
+  <h3>7.2 Recharge flow</h3>
+  <p><b>Trigger:</b> Plan inactive (post-expiry).</p>
+  <ol>
+    <li>User types intent → bot shows recharge-due status.</li>
+    <li>Bot explains why net isn't working + offers recharge CTA.</li>
+    <li>No ticket created. Flow ends with restart card.</li>
+  </ol>
+</div>
+
+<div class="journey">
+  <div class="gate">Gate B fail</div>
+  <h3>7.3 Open ticket already exists</h3>
+  <p><b>Trigger:</b> An open Type 3 / 4 ticket is already in the system.</p>
+  <ol>
+    <li>User types intent → bot acknowledges and shows the existing ticket details (ID, engineer name, TAT).</li>
+    <li>Bot tells user no new ticket is needed.</li>
+    <li>Call CTA → routes to the assigned engineer (existing logic).</li>
+    <li>Flow ends with restart card.</li>
+  </ol>
+</div>
+
+<div class="journey">
+  <div class="gate">Gate C fail</div>
+  <h3>7.4 Resolved ticket in last 48 hr</h3>
+  <p><b>Trigger:</b> A Type 3 / 4 ticket was resolved within the last 48 hours.</p>
+  <ol>
+    <li>Bot recalls the recently resolved ticket and asks "क्या वही दिक्कत वापस आई है?" (side-by-side: हाँ / नहीं).</li>
+    <li><b>हाँ, वही दिक्कत</b> <span class="arrow">→</span> reopen the previous ticket, show updated ticket card + Call CTA, end.</li>
+    <li><b>नहीं, अलग है</b> <span class="arrow">→</span> system runs a fresh ping check and surfaces the result to the user:
+      <ul>
+        <li><b>Ping आ रहा है</b> <span class="arrow">→</span> system checks Wi-Fi connection, surfaces result, then enters the Happy-flow body (ask issue → guided steps → recheck → ticket if unresolved).</li>
+        <li><b>Ping नहीं आ रहा</b> <span class="arrow">→</span> enters the No-ping journey (7.5).</li>
+      </ul>
+    </li>
+  </ol>
+  <div class="callout"><b>Note:</b> Ping result and Wi-Fi result are diagnostic moments shown to the user as system status checks — not background-only.</div>
+</div>
+
+<div class="journey">
+  <div class="gate">Gate D fail</div>
+  <h3>7.5 No ping (netbox unreachable)</h3>
+  <p><b>Trigger:</b> System cannot reach the customer's netbox.</p>
+  <ol>
+    <li>Bot tells user it can't connect to the netbox and asks "क्या आपका नेट बॉक्स ON है?" (हाँ / नहीं).</li>
+    <li><b>हाँ, ON है</b> <span class="arrow">→</span> fast-path SERVICE ticket auto-created ("इलाके में नेट बंद है"), ticket card + Call CTA shown, end.</li>
+    <li><b>नहीं, OFF है</b> <span class="arrow">→</span> bot guides user through turn-on + Wi-Fi reconnect with a single "अब चेक करें" CTA.</li>
+    <li>Bot asks "अब सही चल रहा है?" <span class="arrow">→</span> <b>हाँ:</b> close · <b>नहीं:</b> fast-path SERVICE ticket created, end.</li>
+  </ol>
+</div>
+
+<div class="journey">
+  <div class="gate">Wi-Fi fail</div>
+  <h3>7.6 Wrong / no Wi-Fi connection</h3>
+  <p><b>Trigger:</b> Plan active, ping OK, but user is connected to the wrong Wi-Fi (or none).</p>
+  <ol>
+    <li>Bot runs status check (✅ recharge, ❌ Wi-Fi) — user sees the mismatch.</li>
+    <li>Bot asks issue → guides to connect to the correct Wi-Fi → recheck.</li>
+    <li>Resolved <span class="arrow">→</span> close. Unresolved <span class="arrow">→</span> ticket created.</li>
+  </ol>
+</div>
+
+<div class="journey">
+  <div class="gate">Gate C variant</div>
+  <h3>7.7 Resolved &amp; closed by user (with rating)</h3>
+  <p><b>Trigger:</b> Previous ticket was already closed by the user with a rating — no reopen prompt.</p>
+  <ol>
+    <li>Bot acknowledges the closed ticket with a thank-you.</li>
+    <li>Flow continues fresh — same as Happy flow from the intent step.</li>
+  </ol>
+</div>
+
+<h2 id="patterns">8. Common UI Patterns</h2>
+<table>
+  <tr><th>Pattern</th><th>Used when</th></tr>
+  <tr><td><b>Sticky status bar</b> (top of chat)</td><td>Always — shows current net status + active ticket line (engineer, ETA) once a ticket exists.</td></tr>
+  <tr><td><b>Status check rows</b> (✅ / ❌ stacked)</td><td>Whenever the system reports a diagnostic — recharge, Wi-Fi, ping. Each check is its own row.</td></tr>
+  <tr><td><b>Side-by-side CTA</b> (2 buttons)</td><td>Binary choices — हाँ / नहीं, ON / OFF, same / different.</td></tr>
+  <tr><td><b>In-bubble link CTAs</b></td><td>Continuation actions inside the same bot turn — "हो गया, चेक करते हैं", "अब चेक करें".</td></tr>
+  <tr><td><b>Issue picker</b> (2 options)</td><td>"नेट नहीं चल रहा" / "नेट रुक रुक कर चल रहा है" — anchors the troubleshoot copy.</td></tr>
+  <tr><td><b>Ticket card</b></td><td>Whenever a ticket is created / reopened — shows ticket ID, problem, TAT line, and Call CTA. No "Track complaint" link (handled by default post-ticket flow).</td></tr>
+  <tr><td><b>Call CTA</b></td><td>On ticket cards — routes to the engineer / partner / Wiom owner of that ticket (existing routing).</td></tr>
+  <tr><td><b>Restart card</b></td><td>Last bubble of every closed journey — lets the user restart the chat from scratch.</td></tr>
+</table>
+
+<h2 id="oos">9. Out of Scope (v5)</h2>
+<ul>
+  <li>Pre-booking / pre-install states (different seekHelp meaning).</li>
+  <li>Callback scheduling, IVR integration, technician dispatch from chat.</li>
+  <li>Post-ticket tracking inside this flow — default post-ticket experience continues to handle it.</li>
+  <li>SLA / TAT enforcement — existing TAT-breach notification system handles it.</li>
+  <li>Bilingual (English) templates — Hindi-only in v5.</li>
+  <li>4-category × subtype picker, multi-step troubleshoot nudge cadence, mid-flow interrupt &amp; resume, sentiment-based fast-track — deferred.</li>
+  <li>INACTIVE-state bypass to file service complaints — deferred (v2).</li>
+</ul>
+
+</body>
+</html>
