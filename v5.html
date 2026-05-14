@@ -2202,13 +2202,31 @@ async function caseResolvedReopenSame() {
 async function caseResolvedReopenDifferent() {
   addUserMessage('नहीं, अलग है', 'क्या वही दिक्कत वापस आई है?');
   await wait(700);
-  await showTyping(1200);
-  addWiomMessage('ठीक है — बताइए, अबकी दिक्कत क्या है?', {
-    cta: [
-      { label: 'नेट नहीं चल रहा',           onClick: () => caseFreshPickIssue('not_working',  'नेट नहीं चल रहा') },
-      { label: 'नेट रुक रुक कर चल रहा है', onClick: () => caseFreshPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
-    ]
-  });
+  await showTyping(1300);
+  const pingOk = Math.random() < 0.5;
+  addStatusCheckMixed([
+    pingOk
+      ? { ok: true,  text: 'नेट बॉक्स से signal आ रहा है' }
+      : { ok: false, text: 'नेट बॉक्स से signal नहीं आ रहा' }
+  ]);
+  await wait(1000);
+  await showTyping(1100);
+  if (pingOk) {
+    addWiomMessage('बताइए — अबकी दिक्कत क्या है?', {
+      cta: [
+        { label: 'नेट नहीं चल रहा',           onClick: () => caseFreshPickIssue('not_working',  'नेट नहीं चल रहा') },
+        { label: 'नेट रुक रुक कर चल रहा है', onClick: () => caseFreshPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
+      ]
+    });
+  } else {
+    addWiomWithSideBySide(
+      'हम आपके नेट बॉक्स से connect नहीं कर पा रहे हैं। क्या आपका <b>नेट बॉक्स ON</b> है?',
+      [
+        { label: 'हाँ, ON है',  onClick: () => caseNetboxOn() },
+        { label: 'नहीं, OFF है', onClick: () => caseNetboxOff() }
+      ]
+    );
+  }
 }
 
 // Case D · Router ping fail + Netbox check
