@@ -653,6 +653,57 @@ body {
   align-self: stretch;
 }
 
+.demo-picker {
+  margin: 6px -12px;
+  background: #FFE066;
+  color: #111;
+  display: flex;
+  border-top: 1px solid rgba(0,0,0,0.12);
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+.demo-picker-label {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #111;
+  background: #FFE066;
+  padding: 6px 12px 0;
+  margin: 6px -12px -6px;
+  border-top: 1px solid rgba(0,0,0,0.12);
+}
+.demo-picker-cell {
+  flex: 1;
+  text-align: center;
+  padding: 14px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+  cursor: pointer;
+  user-select: none;
+}
+.demo-picker-cell:hover { background: rgba(0,0,0,0.06); }
+.demo-picker-cell:active { background: rgba(0,0,0,0.12); }
+.demo-picker-divider {
+  width: 1px;
+  background: rgba(0,0,0,0.2);
+  align-self: stretch;
+}
+.demo-branch-marker {
+  align-self: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #111;
+  background: #FFE066;
+  padding: 3px 10px;
+  border-radius: 10px;
+  margin: 4px 0;
+}
+
 .chips-row {
   display: flex;
   flex-wrap: wrap;
@@ -1440,6 +1491,38 @@ function addWiomMediaMessage() {
   scrollToEnd();
 }
 
+function addDemoPicker(label, options) {
+  if (label) {
+    const labelEl = document.createElement('div');
+    labelEl.className = 'demo-picker-label';
+    labelEl.textContent = label;
+    messages.appendChild(labelEl);
+  }
+  const row = document.createElement('div');
+  row.className = 'demo-picker';
+  options.forEach((opt, idx) => {
+    if (idx > 0) {
+      const divider = document.createElement('div');
+      divider.className = 'demo-picker-divider';
+      row.appendChild(divider);
+    }
+    const cell = document.createElement('div');
+    cell.className = 'demo-picker-cell';
+    cell.textContent = opt.label;
+    cell.onclick = () => {
+      const marker = document.createElement('div');
+      marker.className = 'demo-branch-marker';
+      marker.textContent = '▼ ' + opt.label;
+      messages.appendChild(marker);
+      scrollToEnd();
+      opt.onClick();
+    };
+    row.appendChild(cell);
+  });
+  messages.appendChild(row);
+  scrollToEnd();
+}
+
 function addWiomWithSideBySide(html, options) {
   const wrap = document.createElement('div');
   wrap.className = 'bubble-wrap wiom bubble-enter';
@@ -1955,16 +2038,62 @@ async function onReopenSame() {
 
 async function onReopenDifferent() {
   addUserMessage('नहीं, अलग है', 'क्या वही दिक्कत वापस आई है?');
-  log('C_ASK_REOPEN', '→ different', false);
+  log('C_ASK_REOPEN', '→ different — ping check', false);
 
-  await wait(700);
-  await showTyping(1200);
-  addWiomMessage('ठीक है — बताइए, अबकी दिक्कत क्या है?', {
+  await wait(500);
+  addDemoPicker('Demo · ping result चुनें (दोनों आज़माएँ)', [
+    { label: 'Ping आ रहा है',   onClick: () => onReopenDifferentPingOk() },
+    { label: 'Ping नहीं आ रहा', onClick: () => onReopenDifferentPingFail() }
+  ]);
+}
+
+async function onReopenDifferentPingOk() {
+  log('C_ASK_REOPEN', 'ping ok → wifi check', false);
+  await wait(400);
+  addDemoPicker('Demo · Wi-Fi connection चुनें (दोनों आज़माएँ)', [
+    { label: 'Wi-Fi से जुड़े हैं',     onClick: () => onReopenDifferentWifi(true) },
+    { label: 'Wi-Fi से नहीं जुड़े हैं', onClick: () => onReopenDifferentWifi(false) }
+  ]);
+}
+
+async function onReopenDifferentWifi(correctWifi) {
+  setNetStatus('जाँच रहे हैं…');
+  await wait(500);
+  await showTyping(1300);
+  addStatusCheckMixed([
+    { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
+    correctWifi
+      ? { ok: true,  text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' }
+      : { ok: false, text: 'आप अपने Wi-Fi (Wiom Ramesh 1234) से नहीं जुड़े हैं' }
+  ]);
+  log('STATUS_CHECK', correctWifi ? 'all ✓' : 'wifi mismatch flagged', true);
+
+  await wait(1000);
+  await showTyping(1000);
+  const intro = correctWifi
+    ? 'हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?'
+    : 'एक बात बताइए — दिक्कत क्या है?';
+  addWiomMessage(intro, {
     cta: [
       { label: 'नेट नहीं चल रहा',           onClick: () => onPickIssue('not_working',  'नेट नहीं चल रहा') },
       { label: 'नेट रुक रुक कर चल रहा है', onClick: () => onPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
     ]
   });
+  log('ASK_ISSUE', 'awaiting 2-option pick', false);
+}
+
+async function onReopenDifferentPingFail() {
+  log('C_ASK_REOPEN', 'ping fail → netbox check', false);
+  await wait(400);
+  await showTyping(1300);
+  addWiomWithSideBySide(
+    'हम आपके नेट बॉक्स से connect नहीं कर पा रहे हैं। क्या आपका <b>नेट बॉक्स ON</b> है?',
+    [
+      { label: 'हाँ, ON है',  onClick: () => onNetboxOn() },
+      { label: 'नहीं, OFF है', onClick: () => onNetboxOff() }
+    ]
+  );
+  log('STEP_D', 'awaiting netbox ON/OFF', false);
 }
 
 // ============================================================================
@@ -2131,12 +2260,11 @@ async function returningActiveAfterIntent() {
   await showTyping(1400);
 
   addWiomMessage(
-    `वर्मा जी, हम समझ सकते हैं — परेशानी हो रही है। 🙏\n\n` +
-    `रोहित कुमार आपकी शिकायत पर <b>पहले से लगे हैं</b> — हम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।\n\n` +
+    `<b>आपकी एक शिकायत पहले से खुली है।</b> 🙏\n\n` +
     `<b>शिकायत:</b> #${activeComplaint.id}\n` +
-    `<b>इंजीनियर:</b> रोहित कुमार\n` +
+    `<b>स्थिति:</b> रोहित कुमार पहले से लगे हैं\n` +
     `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
-    `आप इंजीनियर को भी कॉल करके स्टेटस पूछ सकते हैं।`,
+    `नई शिकायत बनाने की ज़रूरत नहीं — समाधान का इंतज़ार करें।`,
     { cta: callEngineerCta() }
   );
   log('COMPLETED', 'returning user calmed + offered call', false);
