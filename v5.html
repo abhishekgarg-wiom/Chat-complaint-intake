@@ -2293,8 +2293,28 @@ async function caseResolvedReopenDifferent() {
 
 async function resolvedDifferentPingOk() {
   await wait(400);
-  await showTyping(1100);
-  addWiomMessage('बताइए — अबकी दिक्कत क्या है?', {
+  addDemoPicker('Demo · Wi-Fi connection चुनें (दोनों आज़माएँ)', [
+    { label: 'Wi-Fi से जुड़े हैं',     onClick: () => resolvedDifferentWifi(true) },
+    { label: 'Wi-Fi से नहीं जुड़े हैं', onClick: () => resolvedDifferentWifi(false) }
+  ]);
+}
+
+async function resolvedDifferentWifi(correctWifi) {
+  setNetStatus('जाँच रहे हैं…');
+  await wait(500);
+  await showTyping(1300);
+  addStatusCheckMixed([
+    { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
+    correctWifi
+      ? { ok: true,  text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' }
+      : { ok: false, text: 'आप अपने Wi-Fi (Wiom Ramesh 1234) से नहीं जुड़े हैं' }
+  ]);
+  await wait(1000);
+  await showTyping(1000);
+  const intro = correctWifi
+    ? 'हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?'
+    : 'एक बात बताइए — दिक्कत क्या है?';
+  addWiomMessage(intro, {
     cta: [
       { label: 'नेट नहीं चल रहा',           onClick: () => caseFreshPickIssue('not_working',  'नेट नहीं चल रहा') },
       { label: 'नेट रुक रुक कर चल रहा है', onClick: () => caseFreshPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
