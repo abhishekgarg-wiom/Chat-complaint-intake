@@ -688,6 +688,57 @@ body {
   align-self: stretch;
 }
 
+.demo-picker {
+  margin: 6px -12px;
+  background: #FFE066;
+  color: #111;
+  display: flex;
+  border-top: 1px solid rgba(0,0,0,0.12);
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+.demo-picker-label {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #111;
+  background: #FFE066;
+  padding: 6px 12px 0;
+  margin: 6px -12px -6px;
+  border-top: 1px solid rgba(0,0,0,0.12);
+}
+.demo-picker-cell {
+  flex: 1;
+  text-align: center;
+  padding: 14px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+  cursor: pointer;
+  user-select: none;
+}
+.demo-picker-cell:hover { background: rgba(0,0,0,0.06); }
+.demo-picker-cell:active { background: rgba(0,0,0,0.12); }
+.demo-picker-divider {
+  width: 1px;
+  background: rgba(0,0,0,0.2);
+  align-self: stretch;
+}
+.demo-branch-marker {
+  align-self: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #111;
+  background: #FFE066;
+  padding: 3px 10px;
+  border-radius: 10px;
+  margin: 4px 0;
+}
+
 .chips-row {
   display: flex;
   flex-wrap: wrap;
@@ -1427,6 +1478,38 @@ function addWiomMediaMessage() {
   `;
   wrap.appendChild(bubble);
   messages.appendChild(wrap);
+  scrollToEnd();
+}
+
+function addDemoPicker(label, options) {
+  if (label) {
+    const labelEl = document.createElement('div');
+    labelEl.className = 'demo-picker-label';
+    labelEl.textContent = label;
+    messages.appendChild(labelEl);
+  }
+  const row = document.createElement('div');
+  row.className = 'demo-picker';
+  options.forEach((opt, idx) => {
+    if (idx > 0) {
+      const divider = document.createElement('div');
+      divider.className = 'demo-picker-divider';
+      row.appendChild(divider);
+    }
+    const cell = document.createElement('div');
+    cell.className = 'demo-picker-cell';
+    cell.textContent = opt.label;
+    cell.onclick = () => {
+      const marker = document.createElement('div');
+      marker.className = 'demo-branch-marker';
+      marker.textContent = '▼ ' + opt.label;
+      messages.appendChild(marker);
+      scrollToEnd();
+      opt.onClick();
+    };
+    row.appendChild(cell);
+  });
+  messages.appendChild(row);
   scrollToEnd();
 }
 
@@ -2201,20 +2284,15 @@ async function caseResolvedReopenSame() {
 
 async function caseResolvedReopenDifferent() {
   addUserMessage('नहीं, अलग है', 'क्या वही दिक्कत वापस आई है?');
-  await wait(700);
-  await showTyping(1200);
-  addWiomWithSideBySide(
-    '<i>[demo पिकर]</i> ping check का result क्या मानें?',
-    [
-      { label: 'Ping आ रहा है',     onClick: () => resolvedDifferentPingOk() },
-      { label: 'Ping नहीं आ रहा',   onClick: () => resolvedDifferentPingFail() }
-    ]
-  );
+  await wait(500);
+  addDemoPicker('Demo · ping result चुनें (दोनों आज़माएँ)', [
+    { label: 'Ping आ रहा है',   onClick: () => resolvedDifferentPingOk() },
+    { label: 'Ping नहीं आ रहा', onClick: () => resolvedDifferentPingFail() }
+  ]);
 }
 
 async function resolvedDifferentPingOk() {
-  addUserMessage('Ping आ रहा है', 'ping check का result क्या मानें?');
-  await wait(700);
+  await wait(400);
   await showTyping(1100);
   addWiomMessage('बताइए — अबकी दिक्कत क्या है?', {
     cta: [
@@ -2225,8 +2303,7 @@ async function resolvedDifferentPingOk() {
 }
 
 async function resolvedDifferentPingFail() {
-  addUserMessage('Ping नहीं आ रहा', 'ping check का result क्या मानें?');
-  await wait(700);
+  await wait(400);
   await showTyping(1300);
   addWiomWithSideBySide(
     'हम आपके नेट बॉक्स से connect नहीं कर पा रहे हैं। क्या आपका <b>नेट बॉक्स ON</b> है?',
