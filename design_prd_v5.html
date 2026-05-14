@@ -360,6 +360,20 @@
   </ol>
 </div>
 
+<div class="journey">
+  <div class="gate">Ticket-creation failure (system fallback)</div>
+  <h3>7.8 Error while creating ticket</h3>
+  <p><b>Trigger:</b> User has gone through troubleshoot, problem is still unresolved, but the ticket-creation API fails (Kapture down / network error). This is a graceful fallback — not a user-facing choice.</p>
+  <ol>
+    <li>User says "नहीं" to "अब सही चल रहा है?" — system attempts to create the ticket but fails.</li>
+    <li>Sticky status bar switches to "मदद के लिए कॉल करें".</li>
+    <li>Bot apologizes that the complaint couldn't be saved due to a system issue.</li>
+    <li>Bot surfaces a support phone number with an "अभी कॉल करें" CTA (tel: link) and sets the expectation that the user will need to share the problem once on the call.</li>
+    <li>No ticket card is shown. Flow ends with restart card.</li>
+  </ol>
+  <div class="callout"><b>Note:</b> This is a system-driven path, not a user-facing branch. Surfaces only when ticket creation actually fails — applies to any journey that reaches the create-ticket step (Happy flow, Wrong Wi-Fi, No-ping unresolved, Resolved-different unresolved).</div>
+</div>
+
 <h2 id="patterns">9. Common UI Patterns</h2>
 <table>
   <tr><th>Pattern</th><th>Used when</th></tr>
