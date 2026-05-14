@@ -2159,7 +2159,7 @@ async function caseOpenTicket() {
   addRestartCard();
 }
 
-// Case C · Resolved within 48hr → reopen
+// Case C · 48hr resolved → ask first, then reopen OR route to fresh
 async function caseResolvedReopen() {
   setNetStatus('चालू है');
   seedRechargeHistory();
@@ -2167,12 +2167,19 @@ async function caseResolvedReopen() {
   autoUserBubble();
   await wait(700);
   await showTyping(1300);
-  addWiomMessage(
-    'कल आपकी समस्या — "<b>नेट नहीं चल रहा</b>" (शिकायत #612301) — सुलझाई गई थी।\n\n' +
-    'फिर वही दिक्कत वापस आई है — हम पिछली शिकायत पर फिर से काम शुरू कर रहे हैं।'
+  addWiomWithSideBySide(
+    'कल आपकी समस्या — "<b>नेट नहीं चल रहा</b>" (शिकायत #612301) — सुलझाई गई थी। क्या वही दिक्कत वापस आई है?',
+    [
+      { label: 'हाँ, वही दिक्कत', onClick: () => caseResolvedReopenSame() },
+      { label: 'नहीं, अलग है',     onClick: () => caseResolvedReopenDifferent() }
+    ]
   );
-  await wait(1100);
-  await showTyping(1300);
+}
+
+async function caseResolvedReopenSame() {
+  addUserMessage('हाँ, वही दिक्कत', 'क्या वही दिक्कत वापस आई है?');
+  await wait(700);
+  await showTyping(1400);
   activeComplaint = {
     id: '612301', problem: 'नेट नहीं चल रहा', engineer: 'रोहित कुमार',
     eta: '13 दिसं, 5pm तक'
@@ -2190,6 +2197,18 @@ async function caseResolvedReopen() {
   );
   await wait(1200);
   addRestartCard();
+}
+
+async function caseResolvedReopenDifferent() {
+  addUserMessage('नहीं, अलग है', 'क्या वही दिक्कत वापस आई है?');
+  await wait(700);
+  await showTyping(1200);
+  addWiomMessage('ठीक है — बताइए, अबकी दिक्कत क्या है?', {
+    cta: [
+      { label: 'नेट नहीं चल रहा',           onClick: () => caseFreshPickIssue('not_working',  'नेट नहीं चल रहा') },
+      { label: 'नेट रुक रुक कर चल रहा है', onClick: () => caseFreshPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
+    ]
+  });
 }
 
 // Case D · Router ping fail + Netbox check
