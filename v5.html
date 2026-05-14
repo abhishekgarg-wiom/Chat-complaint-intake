@@ -2202,15 +2202,8 @@ async function caseResolvedReopenSame() {
 async function caseResolvedReopenDifferent() {
   addUserMessage('नहीं, अलग है', 'क्या वही दिक्कत वापस आई है?');
   await wait(700);
-  await showTyping(1300);
+  await showTyping(1500);
   const pingOk = Math.random() < 0.5;
-  addStatusCheckMixed([
-    pingOk
-      ? { ok: true,  text: 'नेट बॉक्स से signal आ रहा है' }
-      : { ok: false, text: 'नेट बॉक्स से signal नहीं आ रहा' }
-  ]);
-  await wait(1000);
-  await showTyping(1100);
   if (pingOk) {
     addWiomMessage('बताइए — अबकी दिक्कत क्या है?', {
       cta: [
