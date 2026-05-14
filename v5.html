@@ -2202,24 +2202,39 @@ async function caseResolvedReopenSame() {
 async function caseResolvedReopenDifferent() {
   addUserMessage('नहीं, अलग है', 'क्या वही दिक्कत वापस आई है?');
   await wait(700);
-  await showTyping(1500);
-  const pingOk = Math.random() < 0.5;
-  if (pingOk) {
-    addWiomMessage('बताइए — अबकी दिक्कत क्या है?', {
-      cta: [
-        { label: 'नेट नहीं चल रहा',           onClick: () => caseFreshPickIssue('not_working',  'नेट नहीं चल रहा') },
-        { label: 'नेट रुक रुक कर चल रहा है', onClick: () => caseFreshPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
-      ]
-    });
-  } else {
-    addWiomWithSideBySide(
-      'हम आपके नेट बॉक्स से connect नहीं कर पा रहे हैं। क्या आपका <b>नेट बॉक्स ON</b> है?',
-      [
-        { label: 'हाँ, ON है',  onClick: () => caseNetboxOn() },
-        { label: 'नहीं, OFF है', onClick: () => caseNetboxOff() }
-      ]
-    );
-  }
+  await showTyping(1200);
+  addWiomWithSideBySide(
+    '<i>[demo पिकर]</i> ping check का result क्या मानें?',
+    [
+      { label: 'Ping आ रहा है',     onClick: () => resolvedDifferentPingOk() },
+      { label: 'Ping नहीं आ रहा',   onClick: () => resolvedDifferentPingFail() }
+    ]
+  );
+}
+
+async function resolvedDifferentPingOk() {
+  addUserMessage('Ping आ रहा है', 'ping check का result क्या मानें?');
+  await wait(700);
+  await showTyping(1100);
+  addWiomMessage('बताइए — अबकी दिक्कत क्या है?', {
+    cta: [
+      { label: 'नेट नहीं चल रहा',           onClick: () => caseFreshPickIssue('not_working',  'नेट नहीं चल रहा') },
+      { label: 'नेट रुक रुक कर चल रहा है', onClick: () => caseFreshPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
+    ]
+  });
+}
+
+async function resolvedDifferentPingFail() {
+  addUserMessage('Ping नहीं आ रहा', 'ping check का result क्या मानें?');
+  await wait(700);
+  await showTyping(1300);
+  addWiomWithSideBySide(
+    'हम आपके नेट बॉक्स से connect नहीं कर पा रहे हैं। क्या आपका <b>नेट बॉक्स ON</b> है?',
+    [
+      { label: 'हाँ, ON है',  onClick: () => caseNetboxOn() },
+      { label: 'नहीं, OFF है', onClick: () => caseNetboxOff() }
+    ]
+  );
 }
 
 // Case D · Router ping fail + Netbox check
