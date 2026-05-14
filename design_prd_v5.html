@@ -314,7 +314,12 @@
     <li><b>हाँ, वही दिक्कत</b> <span class="arrow">→</span> reopen the previous ticket, show updated ticket card + Call CTA, end.</li>
     <li><b>नहीं, अलग है</b> <span class="arrow">→</span> system runs a fresh ping check and surfaces the result to the user:
       <ul>
-        <li><b>Ping आ रहा है</b> <span class="arrow">→</span> system checks Wi-Fi connection, surfaces result, then enters the Happy-flow body (ask issue → guided steps → recheck → ticket if unresolved).</li>
+        <li><b>Ping आ रहा है</b> <span class="arrow">→</span> system runs a Wi-Fi connection check and surfaces the result:
+          <ul>
+            <li><b>Wi-Fi से जुड़े हैं</b> (✅) — status check shows ✅ recharge active + ✅ correct Wi-Fi. Bot acknowledges "हमारी तरफ़ से सब ठीक दिख रहा है" and asks "दिक्कत क्या है?" with 2 issue options <span class="arrow">→</span> guided steps (restart netbox + reconnect) <span class="arrow">→</span> recheck "अब सही चल रहा है?" <span class="arrow">→</span> <b>हाँ:</b> close · <b>नहीं:</b> create ticket, show ticket card + Call CTA.</li>
+            <li><b>Wi-Fi से नहीं जुड़े हैं</b> (❌) — status check shows ✅ recharge active + ❌ wrong / no Wi-Fi. Bot skips the "सब ठीक" line and goes straight to "दिक्कत क्या है?" <span class="arrow">→</span> guided steps (connect to the correct Wi-Fi first, then restart netbox) <span class="arrow">→</span> recheck <span class="arrow">→</span> close on success, ticket on failure.</li>
+          </ul>
+        </li>
         <li><b>Ping नहीं आ रहा</b> <span class="arrow">→</span> enters the No-ping journey (7.5).</li>
       </ul>
     </li>
