@@ -1655,16 +1655,14 @@ function addStatusCheckMixed(items) {
 // ============================================================================
 function buildTicketMessage({
   ticketId, problem, type,
-  engineer = 'रोहित कुमार',
-  dateLine = '13 दिसंबर, 5:00 pm तक समाधान हो जाएगा।',
-  opening = 'आपकी शिकायत दर्ज कर दी है।'
+  dateLine = '13 दिसंबर, शाम 5:00 बजे तक समाधान होने की उम्मीद है।',
+  opening = 'आपकी शिकायत दर्ज हो गई है और हमारी टीम ने इस पर काम शुरू कर दिया है।'
 }) {
-  let msg = `<b>${opening}</b> 🙏\n\n` +
-    `<b>शिकायत:</b> #${ticketId}\n` +
-    `<b>समस्या:</b> ${problem}\n`;
-  if (type) msg += `<b>Type:</b> ${type}\n`;
-  msg += `<b>इंजीनियर:</b> ${engineer}\n` +
-    `<b>${dateLine}</b>`;
+  let msg = `${opening}\n\n` +
+    `<b>टिकट ID:</b> #${ticketId}\n` +
+    `<b>समस्या:</b> ${problem}`;
+  if (type) msg += `\n<b>Type:</b> ${type}`;
+  msg += `\n\n${dateLine}`;
   return msg;
 }
 
@@ -1776,8 +1774,8 @@ async function runApiErrorFlow() {
 
   // Live recheck question (the only interactive moment in this case)
   addWiomWithSideBySide('क्या अब आपका नेट सही चल रहा है?', [
-    { label: 'हाँ',  onClick: () => onApiErrorRecheck(true) },
-    { label: 'नहीं', onClick: () => onApiErrorRecheck(false) }
+    { label: 'हाँ, अब सही है',  onClick: () => onApiErrorRecheck(true) },
+    { label: 'अभी भी दिक्कत है', onClick: () => onApiErrorRecheck(false) }
   ]);
 
   // Disable typing — user already typed earlier
@@ -1789,7 +1787,7 @@ async function runApiErrorFlow() {
 
 async function onApiErrorRecheck(isYes) {
   if (isYes) {
-    addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
+    addUserMessage('हाँ, अब सही है', 'क्या अब आपका नेट सही चल रहा है?');
     setNetStatus('चालू है');
     await wait(700);
     await showTyping(900);
@@ -1800,7 +1798,7 @@ async function onApiErrorRecheck(isYes) {
   }
 
   // नहीं → API error fallback (skip "creating ticket..." simulation)
-  addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
+  addUserMessage('अभी भी दिक्कत है', 'क्या अब आपका नेट सही चल रहा है?');
   log('STEP_G', 'ticket creation failed', true);
 
   await wait(700);
@@ -1901,15 +1899,15 @@ async function onStepsDone(key, label) {
   await showTyping(1100);
 
   addWiomWithSideBySide('क्या अब आपका नेट सही चल रहा है?', [
-    { label: 'हाँ',  onClick: () => onRecheck(true,  key, label) },
-    { label: 'नहीं', onClick: () => onRecheck(false, key, label) }
+    { label: 'हाँ, अब सही है',  onClick: () => onRecheck(true,  key, label) },
+    { label: 'अभी भी दिक्कत है', onClick: () => onRecheck(false, key, label) }
   ]);
   log('RECHECK', 'awaiting हाँ/नहीं', false);
 }
 
 async function onRecheck(isYes, key, label) {
   if (isYes) {
-    addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
+    addUserMessage('हाँ, अब सही है', 'क्या अब आपका नेट सही चल रहा है?');
     log('RECHECK', '→ self-resolved (no ticket)', false);
     setNetStatus('चालू है');
 
@@ -1923,7 +1921,7 @@ async function onRecheck(isYes, key, label) {
     return;
   }
 
-  addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
+  addUserMessage('अभी भी दिक्कत है', 'क्या अब आपका नेट सही चल रहा है?');
   log('RECHECK', '→ unresolved', false);
 
   // Default (Case 1) — create ticket immediately
@@ -1943,8 +1941,7 @@ async function onRecheck(isYes, key, label) {
   showTicketLine(activeComplaint.engineer, activeComplaint.eta);
 
   addWiomMessage(
-    buildTicketMessage({ ticketId, problem: label }) +
-    `\n\nहम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।`,
+    buildTicketMessage({ ticketId, problem: label }),
     { cta: callEngineerCta() }
   );
   log('TICKET', `#${ticketId} — ${PROBLEM_META[key]}`, true);
@@ -1993,10 +1990,8 @@ async function onReopenSame() {
   addWiomMessage(
     buildTicketMessage({
       ticketId: activeComplaint.id,
-      problem: activeComplaint.problem,
-      opening: 'आपकी पिछली समस्या पर फिर से काम शुरू कर दिया है।'
-    }) +
-    `\n\nहम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।`,
+      problem: activeComplaint.problem
+    }),
     { cta: callEngineerCta() }
   );
   log('COMPLETED', 'ticket reopened', false);
@@ -2085,8 +2080,7 @@ async function onNetboxOn() {
   addWiomMessage(
     buildTicketMessage({
       ticketId, problem: 'इलाके में नेट बंद है', type: 'SERVICE · 4hr TAT'
-    }) +
-    `\n\nहम जल्द से जल्द आपके इलाके में काम शुरू करेंगे।`,
+    }),
     { cta: callEngineerCta() }
   );
   log('TICKET', `fast-path #${ticketId} — INTERNET SUPPLY DOWN`, true);
@@ -2122,14 +2116,14 @@ async function onNetboxRecheck() {
   addWiomWithSideBySide(
     'क्या अब आपका नेट सही चल रहा है?',
     [
-      { label: 'हाँ',  onClick: () => onNetboxResolved() },
-      { label: 'नहीं', onClick: () => onNetboxStillDown() }
+      { label: 'हाँ, अब सही है',  onClick: () => onNetboxResolved() },
+      { label: 'अभी भी दिक्कत है', onClick: () => onNetboxStillDown() }
     ]
   );
 }
 
 async function onNetboxResolved() {
-  addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
+  addUserMessage('हाँ, अब सही है', 'क्या अब आपका नेट सही चल रहा है?');
   setNetStatus('चालू है');
   log('COMPLETED', 'netbox flow → self-resolved', false);
   await wait(700);
@@ -2140,7 +2134,7 @@ async function onNetboxResolved() {
 }
 
 async function onNetboxStillDown() {
-  addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
+  addUserMessage('अभी भी दिक्कत है', 'क्या अब आपका नेट सही चल रहा है?');
   log('STEP_D', 'still down after on/recheck → ticket', false);
 
   await wait(700);
@@ -2159,8 +2153,7 @@ async function onNetboxStillDown() {
   showTicketLine(activeComplaint.engineer, activeComplaint.eta);
 
   addWiomMessage(
-    buildTicketMessage({ ticketId, problem: 'नेट नहीं चल रहा' }) +
-    `\n\nहम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।`,
+    buildTicketMessage({ ticketId, problem: 'नेट नहीं चल रहा' }),
     { cta: callEngineerCta() }
   );
   log('TICKET', `#${ticketId}`, true);
