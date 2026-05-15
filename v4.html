@@ -1961,17 +1961,17 @@ async function resolvedReopenAfterIntent() {
   await wait(700);
   await showTyping(1200);
   addWiomWithSideBySide(
-    'कल आपकी समस्या — "<b>नेट नहीं चल रहा</b>" (शिकायत #612301) — सुलझाई गई थी। क्या वही दिक्कत वापस आई है?',
+    'कल आपकी "<b>नेट नहीं चल रहा</b>" वाली समस्या\n<b>टिकट ID #612301</b> में सुलझा दी गई थी।\n\nक्या वही दिक्कत फिर से आ रही है?',
     [
-      { label: 'हाँ, वही दिक्कत', onClick: () => onReopenSame() },
-      { label: 'नहीं, अलग है',     onClick: () => onReopenDifferent() }
+      { label: 'हाँ, वही दिक्कत है', onClick: () => onReopenSame() },
+      { label: 'नहीं, अलग दिक्कत है', onClick: () => onReopenDifferent() }
     ]
   );
   log('C_ASK_REOPEN', 'awaiting yes/no', false);
 }
 
 async function onReopenSame() {
-  addUserMessage('हाँ, वही दिक्कत', 'क्या वही दिक्कत वापस आई है?');
+  addUserMessage('हाँ, वही दिक्कत है', 'क्या वही दिक्कत फिर से आ रही है?');
   log('C_ASK_REOPEN', '→ reopen', false);
 
   activeComplaint = {
@@ -1988,10 +1988,12 @@ async function onReopenSame() {
   await wait(700);
   await showTyping(1400);
   addWiomMessage(
-    buildTicketMessage({
-      ticketId: activeComplaint.id,
-      problem: activeComplaint.problem
-    }),
+    `क्षमा करें कि आपकी "<b>${activeComplaint.problem}</b>" वाली समस्या फिर से आ रही है।\n\n` +
+    `आपकी शिकायत\n` +
+    `<b>टिकट ID:</b> #${activeComplaint.id}\n` +
+    `फिर से दर्ज कर ली गई है।\n\n` +
+    `हमने अपनी टीम से इस पर दोबारा काम शुरू करवा दिया है। आपकी दिक्कत को और ध्यान से देखा जा रहा है और इसे जल्द से जल्द सुलझाने की कोशिश की जा रही है।\n\n` +
+    `आप चिंता न करें। जैसे ही आपकी समस्या सुलझ जाएगी, हम आपको अपडेट कर देंगे।`,
     { cta: callEngineerCta() }
   );
   log('COMPLETED', 'ticket reopened', false);
@@ -2001,7 +2003,7 @@ async function onReopenSame() {
 }
 
 async function onReopenDifferent() {
-  addUserMessage('नहीं, अलग है', 'क्या वही दिक्कत वापस आई है?');
+  addUserMessage('नहीं, अलग दिक्कत है', 'क्या वही दिक्कत फिर से आ रही है?');
   log('C_ASK_REOPEN', '→ different — ping check', false);
 
   await wait(500);
@@ -2173,21 +2175,19 @@ async function inactivePlanAfterIntent() {
   await showTyping(1400);
   setNetStatus('रिचार्ज ज़रूरी है');
   addWiomMessage(
-    'वर्मा जी, आपका <b>₹150</b> का plan <b>5 दिसंबर</b> को खत्म हो गया था — इसी वजह से नेट नहीं चल रहा।\n\n' +
-    'रिचार्ज करते ही नेट तुरंत वापस चालू हो जाएगा।',
+    'वर्मा जी, आपका <b>₹150</b> वाला रिचार्ज प्लान <b>5 दिसंबर</b> को खत्म हो गया है।\n' +
+    'इसी वजह से नेट नहीं चल रहा।\n\n' +
+    'रिचार्ज करते ही आपका नेट फिर से चल जाएगा।',
     { cta: [{ label: 'अभी रिचार्ज करें', onClick: () => onMockRecharge() }] }
   );
   log('STEP_A', 'plan inactive — recharge prompt shown', true);
   log('COMPLETED', 'recharge prompt shown', false);
+  await wait(900);
+  addRestartCard();
 }
 
 async function onMockRecharge() {
-  addUserMessage('अभी रिचार्ज करें', 'रिचार्ज करते ही नेट तुरंत वापस चालू हो जाएगा।');
-  await wait(700);
-  await showTyping(900);
-  addWiomMessage('आपको <b>रिचार्ज screen</b> पर ले जा रहे हैं… 💸');
-  await wait(800);
-  addRestartCard();
+  addUserMessage('अभी रिचार्ज करें', 'रिचार्ज करते ही आपका नेट फिर से चल जाएगा।');
 }
 
 // ============================================================================
@@ -2201,11 +2201,12 @@ async function returningActiveAfterIntent() {
   await showTyping(1400);
 
   addWiomMessage(
-    `<b>आपकी एक शिकायत पहले से खुली है।</b> 🙏\n\n` +
-    `<b>शिकायत:</b> #${activeComplaint.id}\n` +
-    `<b>स्थिति:</b> रोहित कुमार पहले से लगे हैं\n` +
-    `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
-    `नई शिकायत बनाने की ज़रूरत नहीं — समाधान का इंतज़ार करें।`,
+    `आपकी एक शिकायत पहले से दर्ज है और हमारी टीम उस पर लगातार काम कर रही है।\n\n` +
+    `<b>टिकट ID:</b> #${activeComplaint.id}\n` +
+    `<b>समस्या:</b> ${activeComplaint.problem}\n\n` +
+    `आपको दोबारा शिकायत करने की ज़रूरत नहीं है।\n` +
+    `13 दिसंबर, शाम 5:00 बजे तक समाधान होने की उम्मीद है।\n\n` +
+    `जैसे ही आपकी समस्या सुलझ जाएगी, हम आपको तुरंत अपडेट दे देंगे।`,
     { cta: callEngineerCta() }
   );
   log('COMPLETED', 'returning user calmed + offered call', false);
