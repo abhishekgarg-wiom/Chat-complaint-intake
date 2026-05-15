@@ -704,6 +704,127 @@ body {
   margin: 4px 0;
 }
 
+/* ===== Messages reference page ===== */
+.messages-ref-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.92);
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.messages-ref-back, .messages-ref-copy {
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.22);
+  background: transparent;
+  color: #111;
+  cursor: pointer;
+}
+.messages-ref-copy {
+  background: #FFD888;
+  font-weight: 600;
+}
+.messages-ref-copy.copied {
+  background: #cfeacb;
+  border-color: rgba(0,0,0,0.3);
+}
+.messages-ref-content {
+  padding: 16px 18px 40px;
+  color: #181818;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.messages-ref-content * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+.messages-ref-content h1 {
+  font-size: 18px;
+  margin: 0 0 6px;
+}
+.messages-ref-content h2 {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 28px 0 8px;
+  padding: 7px 10px;
+  background: #FFD888;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+.messages-ref-content .ref-intro {
+  font-size: 12.5px;
+  color: #444;
+  margin: 0 0 14px;
+  line-height: 1.55;
+}
+.messages-ref-content .ref-note {
+  font-size: 12px;
+  color: #444;
+  margin: 8px 0;
+  padding: 8px 10px;
+  background: rgba(255,216,136,0.32);
+  border-radius: 6px;
+  line-height: 1.55;
+}
+.messages-ref-content .ref-trigger {
+  font-size: 12px;
+  color: #444;
+  margin: 0 0 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(0,0,0,0.16);
+  line-height: 1.55;
+}
+.messages-ref-content .ref-branch {
+  font-size: 12.5px;
+  color: #2d5e2d;
+  margin: 6px 0 10px;
+  padding: 8px 10px;
+  background: #eef7ed;
+  border-left: 3px solid #5aa55a;
+  border-radius: 4px;
+  line-height: 1.55;
+}
+.messages-ref-content .ref-message {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px;
+}
+.messages-ref-content .ref-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #777;
+  margin: 8px 0 4px;
+}
+.messages-ref-content .ref-label:first-child {
+  margin-top: 0;
+}
+.messages-ref-content .ref-body {
+  margin: 0;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #181818;
+}
+.messages-ref-content code {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: rgba(0,0,0,0.06);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
 .chips-row {
   display: flex;
   flex-wrap: wrap;
@@ -1172,8 +1293,215 @@ body {
         <div class="scenario-card-title">शिकायत नहीं बन पाई</div>
         <div class="scenario-card-desc">User troubleshoot कर चुके हैं — चैट recheck पर है। "नहीं" बोलते ही शिकायत system down निकलता है। Bot honestly बताता है: support number पर call करें, समस्या एक बार और बतानी पड़ेगी।</div>
       </div>
+
+      <div class="scenario-group-label">Reference (for backend)</div>
+      <div class="scenario-card" id="scenarioMessagesCard">
+        <div class="scenario-card-num">📋 All messages — text reference</div>
+        <div class="scenario-card-title">सभी messages एक जगह</div>
+        <div class="scenario-card-desc">Backend system में add करने के लिए case-wise सारे bot messages + CTA labels। हर line plain text और copyable है। ऊपर "Copy all" से सब एक साथ copy होगा।</div>
+      </div>
     </div>
     <div class="context-cta-wrap"></div>
+  </section>
+
+  <!-- ============ MESSAGES REFERENCE PAGE ============ -->
+  <section class="yellow-screen queued" id="messagesScreen" style="background:#FFFAF0;">
+    <div class="messages-ref-header">
+      <button class="messages-ref-back" id="messagesRefBack">← Back</button>
+      <button class="messages-ref-copy" id="messagesRefCopyAll">Copy all</button>
+    </div>
+    <div class="messages-ref-content" id="messagesRefContent">
+      <h1>v4 · सभी messages — text reference</h1>
+      <p class="ref-intro">Backend system में feed करने के लिए सारे bot messages और CTA labels। हर line plain text है — select करके copy कर सकते हैं। Dynamic values placeholder में हैं: <code>{ticket_id}</code>, <code>{problem}</code>, <code>{date_line}</code>।</p>
+
+      <p class="ref-note"><b>Common date line:</b> <code>13 दिसंबर, शाम 5:00 बजे तक समाधान होने की उम्मीद है।</code><br><b>WiFi name placeholder:</b> <code>Wiom Ramesh 1234</code> (user के plan के अनुसार dynamic)</p>
+
+      <h2>Case 1 · Happy flow</h2>
+      <p class="ref-trigger"><b>Trigger:</b> Plan active, no open ticket, no 48hr-resolved, router ping OK. User intent: "मेरा नेट नहीं चल रहा" (या similar).</p>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · ask issue</div>
+        <pre class="ref-body">हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए, दिक्कत क्या है?</pre>
+        <div class="ref-label">CTAs (stacked)</div>
+        <pre class="ref-body">नेट नहीं चल रहा
+नेट रुक रुक कर चल रहा है</pre>
+      </div>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · troubleshoot steps</div>
+        <pre class="ref-body">समझ गए। पहले ये 3 चीजें जल्दी से करके देख लें। कई बार इससे नेट वापस चल जाता है।
+
+1. देखें मोबाइल सही WiFi से जुड़ा है
+Wiom Ramesh 1234
+2. नेट बॉक्स को बंद करके 30 सेकंड बाद चालू करें
+3. फिर मोबाइल को दोबारा WiFi से कनेक्ट करें
+
+सब हो जाए, फिर नीचे वाला बटन दबाएं।</pre>
+        <div class="ref-label">CTA</div>
+        <pre class="ref-body">हो गया, अब चेक करते हैं</pre>
+      </div>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · recheck</div>
+        <pre class="ref-body">क्या अब आपका नेट सही चल रहा है?</pre>
+        <div class="ref-label">CTAs (side-by-side)</div>
+        <pre class="ref-body">हाँ, सही है
+अभी दिक्कत है</pre>
+      </div>
+
+      <p class="ref-branch">▸ अगर "हाँ, सही है" → COMMON · Self-resolved success message (नीचे देखें)<br>▸ अगर "अभी दिक्कत है" → COMMON · New ticket card (नीचे देखें)</p>
+
+      <h2>Case 2 · Recharge flow (plan inactive)</h2>
+      <p class="ref-trigger"><b>Trigger:</b> Plan expired (Gate A fails). User intent: "मेरा नेट नहीं चल रहा".</p>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · recharge prompt</div>
+        <pre class="ref-body">वर्मा जी, आपका ₹150 वाला रिचार्ज प्लान 5 दिसंबर को खत्म हो गया है।
+इसी वजह से नेट नहीं चल रहा।
+
+रिचार्ज करते ही आपका नेट फिर से चल जाएगा।</pre>
+        <div class="ref-label">CTA</div>
+        <pre class="ref-body">अभी रिचार्ज करें</pre>
+      </div>
+      <p class="ref-note">Flow यहीं end होता है। Recharge tap से recharge screen पर redirect (बाहर का flow)।</p>
+      <p class="ref-note"><b>Dynamic values:</b> plan amount (<code>₹150</code>), expiry date (<code>5 दिसंबर</code>).</p>
+
+      <h2>Case 3 · Open ticket exists</h2>
+      <p class="ref-trigger"><b>Trigger:</b> User की पहले से एक Type 3/4 शिकायत open है (Gate B fails). User intent: "मेरा नेट नहीं चल रहा".</p>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · existing ticket card</div>
+        <pre class="ref-body">आपकी एक शिकायत पहले से दर्ज है और हमारी टीम उस पर लगातार काम कर रही है।
+
+टिकट ID: #{ticket_id}
+समस्या: {problem}
+
+आपको दोबारा शिकायत करने की ज़रूरत नहीं है।
+{date_line}
+
+जैसे ही आपकी समस्या सुलझ जाएगी, हम आपको अपडेट कर देंगे।</pre>
+        <div class="ref-label">CTA</div>
+        <pre class="ref-body">इंजीनियर को कॉल करें</pre>
+      </div>
+      <p class="ref-note"><b>Dynamic values:</b> <code>{ticket_id}</code>, <code>{problem}</code>, <code>{date_line}</code>.</p>
+
+      <h2>Case 4 · Resolved ticket (48hr reopen)</h2>
+      <p class="ref-trigger"><b>Trigger:</b> पिछले 48 घंटे में शिकायत resolved हुई थी जो user ने rating से close नहीं की (Gate C fails). User intent: "मेरा नेट नहीं चल रहा".</p>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · reopen ask</div>
+        <pre class="ref-body">कल आपकी "{problem}" वाली समस्या
+टिकट ID #{ticket_id} में सुलझा दी गई थी।
+
+क्या वही दिक्कत फिर से आ रही है?</pre>
+        <div class="ref-label">CTAs (stacked)</div>
+        <pre class="ref-body">हाँ, वही दिक्कत है
+नहीं, अलग दिक्कत है</pre>
+      </div>
+
+      <p class="ref-branch">▸ अगर "हाँ, वही दिक्कत है" → Reopen confirmation (नीचे)<br>▸ अगर "नहीं, अलग दिक्कत है" → System router ping check; Ping OK → Case 1 ask-issue flow; Ping Fail → Case 5 ping-fail flow</p>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · reopen confirmation</div>
+        <pre class="ref-body">क्षमा करें कि आपकी "{problem}" वाली समस्या फिर से आ रही है।
+
+आपकी शिकायत टिकट ID: #{ticket_id} फिर से दर्ज कर ली गई है।
+
+हमने अपनी टीम से इस पर दोबारा काम शुरू करवा दिया है। आपकी दिक्कत को और ध्यान से देखा जा रहा है और इसे जल्द से जल्द सुलझाने की कोशिश की जा रही है।
+
+आप चिंता न करें। जैसे ही आपकी समस्या सुलझ जाएगी, हम आपको अपडेट कर देंगे।</pre>
+        <div class="ref-label">CTA</div>
+        <pre class="ref-body">इंजीनियर को कॉल करें</pre>
+      </div>
+      <p class="ref-note"><b>Dynamic values:</b> <code>{problem}</code>, <code>{ticket_id}</code>.</p>
+
+      <h2>Case 5 · No ping (router ping fail)</h2>
+      <p class="ref-trigger"><b>Trigger:</b> NAS से नेट बॉक्स तक ping fail (Gate D fails). User intent: "मेरा नेट नहीं चल रहा" — या Case 4 different-issue branch से route।</p>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · netbox status ask</div>
+        <pre class="ref-body">हम आपके नेट बॉक्स से कनेक्ट नहीं कर पा रहे हैं।
+
+कृपया एक बार देख लें, क्या आपका नेट बॉक्स चालू है?</pre>
+        <div class="ref-label">CTAs (side-by-side)</div>
+        <pre class="ref-body">हाँ, चालू है
+नहीं, बंद है</pre>
+      </div>
+
+      <p class="ref-branch">▸ अगर "हाँ, चालू है" → COMMON · New ticket card (नीचे; service-side issue)<br>▸ अगर "नहीं, बंद है" → नेट बॉक्स चालू करने के steps (नीचे)</p>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · netbox OFF — steps to turn on</div>
+        <pre class="ref-body">समझ गए। पहले ये 3 चीजें जल्दी से करके देख लें। कई बार इससे नेट वापस चल जाता है।
+
+1. नेट बॉक्स को चालू करें
+2. बॉक्स की लाइटें स्थिर होने तक रुकें
+3. फिर मोबाइल को सही WiFi से जोड़ें
+Wiom Ramesh 1234
+
+सब हो जाए, फिर नीचे वाला बटन दबाएं।</pre>
+        <div class="ref-label">CTA</div>
+        <pre class="ref-body">हो गया, अब चेक करते हैं</pre>
+      </div>
+
+      <p class="ref-branch">▸ Next: COMMON · Recheck question + branches (नीचे)</p>
+
+      <h2>Case 6 · Step G error (ticket creation failure)</h2>
+      <p class="ref-trigger"><b>Trigger:</b> User ने troubleshoot complete किया, recheck पर "अभी दिक्कत है" tap किया — लेकिन शिकायत create करने का API fail (Kapture down).</p>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · ticket-creation error fallback</div>
+        <pre class="ref-body">माफ़ कीजिए, अभी आपकी शिकायत दर्ज नहीं हो पा रही है। 🙏
+
+आप कुछ देर बाद दोबारा प्रयास कर सकते हैं।
+या फिर नीचे दिए गए बटन से हमें कॉल करके अपनी दिक्कत बता सकते हैं।
+
+हम आपकी समस्या को जल्द से जल्द सुलझाने की कोशिश करेंगे।</pre>
+        <div class="ref-label">CTA</div>
+        <pre class="ref-body">मदद के लिए कॉल करें</pre>
+      </div>
+      <p class="ref-note">CTA tap → tel:18001234567 (support number)। Sticky bar status: "मदद के लिए कॉल करें"।</p>
+
+      <h2>COMMON · Recheck question</h2>
+      <p class="ref-trigger"><b>Used in:</b> Case 1 (post-troubleshoot), Case 5 OFF flow (post-restart), Case 6 (pre-error).</p>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · recheck</div>
+        <pre class="ref-body">क्या अब आपका नेट सही चल रहा है?</pre>
+        <div class="ref-label">CTAs (side-by-side)</div>
+        <pre class="ref-body">हाँ, सही है
+अभी दिक्कत है</pre>
+      </div>
+
+      <h2>COMMON · Self-resolved success</h2>
+      <p class="ref-trigger"><b>Used in:</b> Recheck question — "हाँ, सही है" branch (Case 1, Case 5 OFF, Case 6 happy path).</p>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · success</div>
+        <pre class="ref-body">बढ़िया! 🎉 आपका नेट अब सही चल रहा है।
+
+आगे कभी भी कोई दिक्कत हो, तो यहीं चैट में बता दीजिए।
+हम आपकी मदद के लिए हमेशा तैयार हैं।</pre>
+        <div class="ref-label">CTA</div>
+        <pre class="ref-body">(कोई नहीं — flow end होता है)</pre>
+      </div>
+
+      <h2>COMMON · New ticket card</h2>
+      <p class="ref-trigger"><b>Used in:</b> Case 1 "अभी दिक्कत है" branch, Case 5 "हाँ, चालू है" branch, Case 5 OFF "अभी दिक्कत है" branch.</p>
+
+      <div class="ref-message">
+        <div class="ref-label">BOT · new ticket created</div>
+        <pre class="ref-body">आपकी शिकायत दर्ज हो गई है और हमारी टीम ने इस पर काम शुरू कर दिया है।
+
+टिकट ID: #{ticket_id}
+समस्या: {problem}
+
+{date_line}</pre>
+        <div class="ref-label">CTA</div>
+        <pre class="ref-body">इंजीनियर को कॉल करें</pre>
+      </div>
+      <p class="ref-note"><b>Dynamic values:</b> <code>{ticket_id}</code> = newly generated 6-digit number, <code>{problem}</code> = user-selected issue label ("नेट नहीं चल रहा" / "नेट रुक रुक कर चल रहा है"), <code>{date_line}</code> = "13 दिसंबर, शाम 5:00 बजे तक समाधान होने की उम्मीद है।"</p>
+    </div>
   </section>
 
   <div class="status-bar">
@@ -2322,6 +2650,44 @@ document.getElementById('scenario3Card').addEventListener('click', () => pickSce
 document.getElementById('scenario5Card').addEventListener('click', () => pickScenario('ping_fail'));
 document.getElementById('scenario6Card').addEventListener('click', () => pickScenario('inactive_plan'));
 document.getElementById('scenario8Card').addEventListener('click', () => pickScenario('api_error'));
+
+// ============ MESSAGES REFERENCE PAGE ============
+const messagesScreen      = document.getElementById('messagesScreen');
+const messagesRefBack     = document.getElementById('messagesRefBack');
+const messagesRefCopyAll  = document.getElementById('messagesRefCopyAll');
+const messagesRefContent  = document.getElementById('messagesRefContent');
+
+function showMessagesRef() {
+  contextScreen.classList.add('hidden');
+  scenarioScreen.classList.add('queued');
+  messagesScreen.classList.remove('queued', 'hidden');
+}
+function hideMessagesRef() {
+  messagesScreen.classList.add('queued');
+  scenarioScreen.classList.remove('queued', 'hidden');
+}
+
+document.getElementById('scenarioMessagesCard').addEventListener('click', showMessagesRef);
+messagesRefBack.addEventListener('click', hideMessagesRef);
+messagesRefCopyAll.addEventListener('click', async () => {
+  const text = messagesRefContent.innerText;
+  try {
+    await navigator.clipboard.writeText(text);
+    messagesRefCopyAll.textContent = '✓ Copied!';
+    messagesRefCopyAll.classList.add('copied');
+    setTimeout(() => {
+      messagesRefCopyAll.textContent = 'Copy all';
+      messagesRefCopyAll.classList.remove('copied');
+    }, 1800);
+  } catch (e) {
+    // Fallback — select all text in the container
+    const range = document.createRange();
+    range.selectNodeContents(messagesRefContent);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+});
 
 // Override the end-of-chat restart card behavior:
 // instead of re-running the same scenario, return to the scenario chooser.
