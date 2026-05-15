@@ -2182,12 +2182,14 @@ async function caseResolvedReopen() {
   autoUserBubble();
   await wait(700);
   await showTyping(1300);
-  addWiomWithSideBySide(
+  addWiomMessage(
     'कल आपकी "<b>नेट नहीं चल रहा</b>" वाली समस्या\n<b>टिकट ID #612301</b> में सुलझा दी गई थी।\n\nक्या वही दिक्कत फिर से आ रही है?',
-    [
-      { label: 'हाँ, वही दिक्कत है', onClick: () => caseResolvedReopenSame() },
-      { label: 'नहीं, अलग दिक्कत है', onClick: () => caseResolvedReopenDifferent() }
-    ]
+    {
+      cta: [
+        { label: 'हाँ, वही दिक्कत है', onClick: () => caseResolvedReopenSame() },
+        { label: 'नहीं, अलग दिक्कत है', onClick: () => caseResolvedReopenDifferent() }
+      ]
+    }
   );
 }
 

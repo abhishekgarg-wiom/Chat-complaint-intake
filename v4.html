@@ -1953,12 +1953,14 @@ async function resolvedReopenAfterIntent() {
 
   await wait(700);
   await showTyping(1200);
-  addWiomWithSideBySide(
+  addWiomMessage(
     'कल आपकी "<b>नेट नहीं चल रहा</b>" वाली समस्या\n<b>टिकट ID #612301</b> में सुलझा दी गई थी।\n\nक्या वही दिक्कत फिर से आ रही है?',
-    [
-      { label: 'हाँ, वही दिक्कत है', onClick: () => onReopenSame() },
-      { label: 'नहीं, अलग दिक्कत है', onClick: () => onReopenDifferent() }
-    ]
+    {
+      cta: [
+        { label: 'हाँ, वही दिक्कत है', onClick: () => onReopenSame() },
+        { label: 'नहीं, अलग दिक्कत है', onClick: () => onReopenDifferent() }
+      ]
+    }
   );
   log('C_ASK_REOPEN', 'awaiting yes/no', false);
 }
