@@ -1652,16 +1652,14 @@ function addStatusCheckMixed(items) {
 // ============================================================================
 function buildTicketMessage({
   ticketId, problem, type,
-  engineer = 'रोहित कुमार',
-  dateLine = '13 दिसंबर, 5:00 pm तक समाधान हो जाएगा।',
-  opening = 'आपकी शिकायत दर्ज कर दी है।'
+  dateLine = '13 दिसंबर, शाम 5:00 बजे तक समाधान होने की उम्मीद है।',
+  opening = 'आपकी शिकायत दर्ज हो गई है और हमारी टीम ने इस पर काम शुरू कर दिया है।'
 }) {
-  let msg = `<b>${opening}</b> 🙏\n\n` +
-    `<b>शिकायत:</b> #${ticketId}\n` +
-    `<b>समस्या:</b> ${problem}\n`;
-  if (type) msg += `<b>Type:</b> ${type}\n`;
-  msg += `<b>इंजीनियर:</b> ${engineer}\n` +
-    `<b>${dateLine}</b>`;
+  let msg = `${opening}\n\n` +
+    `<b>टिकट ID:</b> #${ticketId}\n` +
+    `<b>समस्या:</b> ${problem}`;
+  if (type) msg += `\n<b>Type:</b> ${type}`;
+  msg += `\n\n${dateLine}`;
   return msg;
 }
 
@@ -1738,14 +1736,6 @@ async function runInactivePlanFlow() {
   log('entry', 'inactive_plan — awaiting intent', false);
 }
 
-async function runWrongWifiFlow() {
-  activeComplaint = null;
-  setNetStatus('चालू है');
-  hideTicketLine();
-  seedRechargeHistory();
-  log('entry', 'wrong_wifi — awaiting intent', false);
-}
-
 async function runApiErrorFlow() {
   activeComplaint = null;
   setNetStatus('जाँच पूरी — रिज़ल्ट का इंतज़ार');
@@ -1754,13 +1744,8 @@ async function runApiErrorFlow() {
   // Seed full prior conversation as history (no animation)
   seedRechargeHistory();
   addUserMessage(INTENT_TEXT);
-  addWiomMessage('अरे, आपका रिचार्ज तो <b>28 दिसंबर तक चालू</b> है — फिर भी दिक्कत? चलिए तुरंत देखते हैं।');
-  addStatusCheckMixed([
-    { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
-    { ok: true, text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' }
-  ]);
 
-  const issueBubble = addWiomMessage('हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?', {
+  const issueBubble = addWiomMessage('हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए, दिक्कत क्या है?', {
     cta: [
       { label: 'नेट नहीं चल रहा',           onClick: () => {} },
       { label: 'नेट रुक रुक कर चल रहा है', onClick: () => {} }
@@ -1770,23 +1755,24 @@ async function runApiErrorFlow() {
   addUserMessage('नेट नहीं चल रहा', 'दिक्कत क्या है?');
 
   const tsBubble = addWiomMessage(
-    'समझ गए। पहले ये जल्दी से कर लें — कई बार इन्हीं से नेट चल जाता है:\n\n' +
-    '<b>1.</b> देखें कि आप सही Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं\n' +
-    '<b>2.</b> नेट बॉक्स बंद-चालू करें — तार निकालें, <b>30 सेकंड</b> रुकें, वापस लगाएं\n' +
-    '<b>3.</b> लाइटें स्थिर हों, तो मोबाइल को दोबारा कनेक्ट करें\n\n' +
-    'सब करने के बाद नीचे का बटन दबाएं।',
+    'समझ गए। पहले ये <b>3 चीजें</b> जल्दी से करके देख लें। कई बार इससे नेट वापस चल जाता है।\n\n' +
+    '<b>1.</b> देखें मोबाइल सही WiFi से जुड़ा है\n' +
+    '<b>Wiom Ramesh 1234</b>\n' +
+    '<b>2.</b> नेट बॉक्स को बंद करके <b>30 सेकंड</b> बाद चालू करें\n' +
+    '<b>3.</b> फिर मोबाइल को दोबारा WiFi से कनेक्ट करें\n\n' +
+    'सब हो जाए, फिर नीचे वाला बटन दबाएं।',
     {
       media: true,
       cta: [{ label: 'हो गया, अब चेक करते हैं', onClick: () => {} }]
     }
   );
   tsBubble.querySelectorAll('.cta-link').forEach(el => el.classList.add('consumed'));
-  addUserMessage('हो गया, अब चेक करते हैं', 'सब करने के बाद नीचे का बटन दबाएं।');
+  addUserMessage('हो गया, अब चेक करते हैं', 'सब हो जाए, फिर नीचे वाला बटन दबाएं।');
 
   // Live recheck question (the only interactive moment in this case)
   addWiomWithSideBySide('क्या अब आपका नेट सही चल रहा है?', [
-    { label: 'हाँ',  onClick: () => onApiErrorRecheck(true) },
-    { label: 'नहीं', onClick: () => onApiErrorRecheck(false) }
+    { label: 'हाँ, सही है',  onClick: () => onApiErrorRecheck(true) },
+    { label: 'अभी दिक्कत है', onClick: () => onApiErrorRecheck(false) }
   ]);
 
   // Disable typing — user already typed earlier
@@ -1798,29 +1784,29 @@ async function runApiErrorFlow() {
 
 async function onApiErrorRecheck(isYes) {
   if (isYes) {
-    addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
+    addUserMessage('हाँ, सही है', 'क्या अब आपका नेट सही चल रहा है?');
     setNetStatus('चालू है');
     await wait(700);
     await showTyping(900);
-    addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं।');
+    addWiomMessage('बढ़िया! 🎉 आपका नेट अब सही चल रहा है।\n\nआगे कभी भी कोई दिक्कत हो, तो यहीं चैट में बता दीजिए।\nहम आपकी मदद के लिए हमेशा तैयार हैं।');
     await wait(600);
     addRestartCard();
     return;
   }
 
   // नहीं → API error fallback (skip "creating ticket..." simulation)
-  addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
+  addUserMessage('अभी दिक्कत है', 'क्या अब आपका नेट सही चल रहा है?');
   log('STEP_G', 'ticket creation failed', true);
 
   await wait(700);
   await showTyping(1500);
   setNetStatus('मदद के लिए कॉल करें');
   addWiomMessage(
-    `माफ़ कीजिए — अभी हमारा शिकायत सिस्टम काम नहीं कर रहा, इसलिए आपकी शिकायत सेव नहीं हो पाई। 🙏\n\n` +
-    `<b>तब तक</b> इस नंबर पर कॉल करें — हमारा सपोर्ट एजेंट तुरंत आपकी मदद करेगा:\n` +
-    `<b>1800-123-4567</b>\n\n` +
-    `कॉल पर अपनी समस्या एक बार और बतानी पड़ेगी — हम जल्द से जल्द आपकी समस्या सुलझाने का प्रयास करेंगे।`,
-    { cta: [{ label: 'अभी कॉल करें', onClick: () => window.open('tel:18001234567') }] }
+    `माफ़ कीजिए, अभी आपकी शिकायत दर्ज नहीं हो पा रही है। 🙏\n\n` +
+    `आप कुछ देर बाद दोबारा प्रयास कर सकते हैं।\n` +
+    `या फिर नीचे दिए गए बटन से हमें कॉल करके अपनी दिक्कत बता सकते हैं।\n\n` +
+    `हम आपकी समस्या को जल्द से जल्द सुलझाने की कोशिश करेंगे।`,
+    { cta: [{ label: 'मदद के लिए कॉल करें', onClick: () => window.open('tel:18001234567') }] }
   );
   log('COMPLETED', 'fallback to call', false);
 
@@ -2101,12 +2087,7 @@ async function inactivePlanAfterIntent() {
 }
 
 async function onMockRecharge() {
-  addUserMessage('अभी रिचार्ज करें', 'रिचार्ज करते ही नेट तुरंत वापस चालू हो जाएगा।');
-  await wait(700);
-  await showTyping(900);
-  addWiomMessage('आपको <b>रिचार्ज screen</b> पर ले जा रहे हैं… 💸');
-  await wait(800);
-  addRestartCard();
+  addUserMessage('अभी रिचार्ज करें', 'रिचार्ज करते ही आपका नेट फिर से चल जाएगा।');
 }
 
 // ============================================================================
@@ -2138,57 +2119,6 @@ async function returningActiveAfterIntent() {
 // CASE 2 — Continuity (returning with an active complaint)
 // ============================================================================
 // ============================================================================
-// CASE 2 — Continuity (user-triggered) · open ticket exists, user asks
-// ============================================================================
-// ============================================================================
-// Case 7 — Wrong Wi-Fi · same flow as Case 1, only status check shows ❌ on Wi-Fi
-// ============================================================================
-async function wrongWifiAfterIntent() {
-  addUserMessage(INTENT_TEXT);
-  setNetStatus('जाँच रहे हैं…');
-  log('entry', 'wrong_wifi — intent sent', false);
-
-  await wait(700);
-  await showTyping(1200);
-  addWiomMessage('अरे, आपका रिचार्ज तो <b>28 दिसंबर तक चालू</b> है — फिर भी दिक्कत? चलिए तुरंत देखते हैं।');
-
-  await wait(800);
-  await showTyping(1300);
-  addStatusCheckMixed([
-    { ok: true,  text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
-    { ok: false, text: 'आप अपने Wi-Fi (Wiom Ramesh 1234) से नहीं जुड़े हैं' }
-  ]);
-  log('STATUS_CHECK', 'wifi mismatch flagged', true);
-
-  await wait(1000);
-  await showTyping(1000);
-  addWiomMessage('एक बात बताइए — दिक्कत क्या है?', {
-    cta: [
-      { label: 'नेट नहीं चल रहा',           onClick: () => onPickIssue('not_working',  'नेट नहीं चल रहा') },
-      { label: 'नेट रुक रुक कर चल रहा है', onClick: () => onPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
-    ]
-  });
-  log('ASK_ISSUE', 'awaiting 2-option pick', false);
-}
-
-// ============================================================================
-// Case 4 (NEW) — Resolved + closed previous ticket → routes to fresh flow
-// ============================================================================
-async function runResolvedClosedFlow() {
-  activeComplaint = null;
-  setNetStatus('चालू है');
-  hideTicketLine();
-
-  seedRechargeHistory();
-  addPrevChatCard('पिछली शिकायत आपने बंद कर दी थी');
-  addWiomMessage(
-    'आपकी पिछली शिकायत <b>#612290</b> हल हुई थी और आपने rating देकर बंद कर दी थी। 🙏\n\nधन्यवाद!'
-  );
-
-  log('entry', 'resolved_closed — fresh flow on intent', false);
-}
-
-// ============================================================================
 // v5 — Gate-based decision tree walk
 // ============================================================================
 
@@ -2209,11 +2139,12 @@ async function caseInactivePlan() {
   await wait(700);
   await showTyping(1400);
   addWiomMessage(
-    'वर्मा जी, आपका <b>₹150</b> का plan <b>5 दिसंबर</b> को खत्म हो गया था — इसी वजह से नेट नहीं चल रहा।\n\n' +
-    'रिचार्ज करते ही नेट तुरंत वापस चालू हो जाएगा।',
+    'वर्मा जी, आपका <b>₹150</b> वाला रिचार्ज प्लान <b>5 दिसंबर</b> को खत्म हो गया है।\n' +
+    'इसी वजह से नेट नहीं चल रहा।\n\n' +
+    'रिचार्ज करते ही आपका नेट फिर से चल जाएगा।',
     { cta: [{ label: 'अभी रिचार्ज करें', onClick: () => onMockRecharge() }] }
   );
-  await wait(1500);
+  await wait(900);
   addRestartCard();
 }
 
@@ -2231,11 +2162,12 @@ async function caseOpenTicket() {
   await wait(700);
   await showTyping(1300);
   addWiomMessage(
-    `<b>आपकी एक शिकायत पहले से खुली है।</b> 🙏\n\n` +
-    `<b>शिकायत:</b> #${activeComplaint.id}\n` +
-    `<b>स्थिति:</b> रोहित कुमार पहले से लगे हैं\n` +
-    `<b>13 दिसंबर, 5:00 pm</b> तक समाधान हो जाएगा।\n\n` +
-    `नई शिकायत बनाने की ज़रूरत नहीं — समाधान का इंतज़ार करें।`,
+    `आपकी एक शिकायत पहले से दर्ज है और हमारी टीम उस पर लगातार काम कर रही है।\n\n` +
+    `<b>टिकट ID:</b> #${activeComplaint.id}\n` +
+    `<b>समस्या:</b> ${activeComplaint.problem}\n\n` +
+    `आपको दोबारा शिकायत करने की ज़रूरत नहीं है।\n` +
+    `13 दिसंबर, शाम 5:00 बजे तक समाधान होने की उम्मीद है।\n\n` +
+    `जैसे ही आपकी समस्या सुलझ जाएगी, हम आपको अपडेट कर देंगे।`,
     { cta: callEngineerCta() }
   );
   await wait(1200);
@@ -2251,16 +2183,16 @@ async function caseResolvedReopen() {
   await wait(700);
   await showTyping(1300);
   addWiomWithSideBySide(
-    'कल आपकी समस्या — "<b>नेट नहीं चल रहा</b>" (शिकायत #612301) — सुलझाई गई थी। क्या वही दिक्कत वापस आई है?',
+    'कल आपकी "<b>नेट नहीं चल रहा</b>" वाली समस्या\n<b>टिकट ID #612301</b> में सुलझा दी गई थी।\n\nक्या वही दिक्कत फिर से आ रही है?',
     [
-      { label: 'हाँ, वही दिक्कत', onClick: () => caseResolvedReopenSame() },
-      { label: 'नहीं, अलग है',     onClick: () => caseResolvedReopenDifferent() }
+      { label: 'हाँ, वही दिक्कत है', onClick: () => caseResolvedReopenSame() },
+      { label: 'नहीं, अलग दिक्कत है', onClick: () => caseResolvedReopenDifferent() }
     ]
   );
 }
 
 async function caseResolvedReopenSame() {
-  addUserMessage('हाँ, वही दिक्कत', 'क्या वही दिक्कत वापस आई है?');
+  addUserMessage('हाँ, वही दिक्कत है', 'क्या वही दिक्कत फिर से आ रही है?');
   await wait(700);
   await showTyping(1400);
   activeComplaint = {
@@ -2270,12 +2202,10 @@ async function caseResolvedReopenSame() {
   setNetStatus('समस्या पर फिर से काम शुरू');
   showTicketLine(activeComplaint.engineer, activeComplaint.eta);
   addWiomMessage(
-    buildTicketMessage({
-      ticketId: activeComplaint.id,
-      problem: activeComplaint.problem,
-      opening: 'आपकी पिछली समस्या पर फिर से काम शुरू कर दिया है।'
-    }) +
-    `\n\nहम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।`,
+    `क्षमा करें कि आपकी "<b>${activeComplaint.problem}</b>" वाली समस्या फिर से आ रही है।\n\n` +
+    `आपकी शिकायत <b>टिकट ID: #${activeComplaint.id}</b> फिर से दर्ज कर ली गई है।\n\n` +
+    `हमने अपनी टीम से इस पर दोबारा काम शुरू करवा दिया है। आपकी दिक्कत को और ध्यान से देखा जा रहा है और इसे जल्द से जल्द सुलझाने की कोशिश की जा रही है।\n\n` +
+    `आप चिंता न करें। जैसे ही आपकी समस्या सुलझ जाएगी, हम आपको अपडेट कर देंगे।`,
     { cta: callEngineerCta() }
   );
   await wait(1200);
@@ -2283,7 +2213,7 @@ async function caseResolvedReopenSame() {
 }
 
 async function caseResolvedReopenDifferent() {
-  addUserMessage('नहीं, अलग है', 'क्या वही दिक्कत वापस आई है?');
+  addUserMessage('नहीं, अलग दिक्कत है', 'क्या वही दिक्कत फिर से आ रही है?');
   await wait(500);
   addDemoPicker('Demo · ping result चुनें (दोनों आज़माएँ)', [
     { label: 'Ping आ रहा है',   onClick: () => resolvedDifferentPingOk() },
@@ -2292,29 +2222,10 @@ async function caseResolvedReopenDifferent() {
 }
 
 async function resolvedDifferentPingOk() {
-  await wait(400);
-  addDemoPicker('Demo · Wi-Fi connection चुनें (दोनों आज़माएँ)', [
-    { label: 'Wi-Fi से जुड़े हैं',     onClick: () => resolvedDifferentWifi(true) },
-    { label: 'Wi-Fi से नहीं जुड़े हैं', onClick: () => resolvedDifferentWifi(false) }
-  ]);
-}
-
-async function resolvedDifferentWifi(correctWifi) {
   setNetStatus('जाँच रहे हैं…');
   await wait(500);
-  await showTyping(1300);
-  addStatusCheckMixed([
-    { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
-    correctWifi
-      ? { ok: true,  text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' }
-      : { ok: false, text: 'आप अपने Wi-Fi (Wiom Ramesh 1234) से नहीं जुड़े हैं' }
-  ]);
-  await wait(1000);
-  await showTyping(1000);
-  const intro = correctWifi
-    ? 'हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?'
-    : 'एक बात बताइए — दिक्कत क्या है?';
-  addWiomMessage(intro, {
+  await showTyping(1100);
+  addWiomMessage('हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए, दिक्कत क्या है?', {
     cta: [
       { label: 'नेट नहीं चल रहा',           onClick: () => caseFreshPickIssue('not_working',  'नेट नहीं चल रहा') },
       { label: 'नेट रुक रुक कर चल रहा है', onClick: () => caseFreshPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
@@ -2326,10 +2237,10 @@ async function resolvedDifferentPingFail() {
   await wait(400);
   await showTyping(1300);
   addWiomWithSideBySide(
-    'हम आपके नेट बॉक्स से connect नहीं कर पा रहे हैं। क्या आपका <b>नेट बॉक्स ON</b> है?',
+    'हम आपके नेट बॉक्स से कनेक्ट नहीं कर पा रहे हैं।\n\nकृपया एक बार देख लें, क्या आपका <b>नेट बॉक्स चालू</b> है?',
     [
-      { label: 'हाँ, ON है',  onClick: () => caseNetboxOn() },
-      { label: 'नहीं, OFF है', onClick: () => caseNetboxOff() }
+      { label: 'हाँ, चालू है',  onClick: () => caseNetboxOn() },
+      { label: 'नहीं, बंद है', onClick: () => caseNetboxOff() }
     ]
   );
 }
@@ -2343,78 +2254,16 @@ async function caseNetboxCheck() {
   await wait(700);
   await showTyping(1500);
   addWiomWithSideBySide(
-    'हम आपके नेट बॉक्स से connect नहीं कर पा रहे हैं। क्या आपका <b>नेट बॉक्स ON</b> है?',
+    'हम आपके नेट बॉक्स से कनेक्ट नहीं कर पा रहे हैं।\n\nकृपया एक बार देख लें, क्या आपका <b>नेट बॉक्स चालू</b> है?',
     [
-      { label: 'हाँ, ON है',  onClick: () => caseNetboxOn() },
-      { label: 'नहीं, OFF है', onClick: () => caseNetboxOff() }
+      { label: 'हाँ, चालू है',  onClick: () => caseNetboxOn() },
+      { label: 'नहीं, बंद है', onClick: () => caseNetboxOff() }
     ]
   );
 }
 
 async function caseNetboxOn() {
-  addUserMessage('हाँ, ON है', 'क्या आपका नेट बॉक्स ON है?');
-  await wait(700);
-  await showTyping(1400);
-  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
-  activeComplaint = {
-    id: ticketId, problem: 'इलाके में नेट बंद है', engineer: 'रोहित कुमार',
-    eta: '13 दिसं, 5pm तक'
-  };
-  setNetStatus('रोहित कुमार आ रहे हैं');
-  showTicketLine(activeComplaint.engineer, activeComplaint.eta);
-  addWiomMessage(
-    buildTicketMessage({
-      ticketId, problem: 'इलाके में नेट बंद है', type: 'SERVICE · 4hr TAT'
-    }) +
-    `\n\nहम जल्द से जल्द आपके इलाके में काम शुरू करेंगे।`,
-    { cta: callEngineerCta() }
-  );
-  await wait(1200);
-  addRestartCard();
-}
-
-async function caseNetboxOff() {
-  addUserMessage('नहीं, OFF है', 'क्या आपका नेट बॉक्स ON है?');
-  await wait(700);
-  await showTyping(1500);
-  addWiomMessage(
-    'ठीक है — कुछ steps follow करें:\n\n' +
-    '<b>1.</b> अपने <b>नेट बॉक्स को ON</b> करें (तार लगाएं, switch on करें)\n' +
-    '<b>2.</b> लाइटें स्थिर होने तक रुकें\n' +
-    '<b>3.</b> मोबाइल को सही Wi-Fi (<b>Wiom Ramesh 1234</b>) से जोड़ें\n\n' +
-    'सब हो जाए तो नीचे का बटन दबाएं।',
-    {
-      media: true,
-      cta: [{ label: 'अब check करें', onClick: () => caseNetboxRecheck() }]
-    }
-  );
-}
-
-async function caseNetboxRecheck() {
-  addUserMessage('अब check करें', 'सब हो जाए तो नीचे का बटन दबाएं।');
-  await wait(700);
-  await showTyping(1100);
-  addWiomWithSideBySide(
-    'क्या अब आपका नेट सही चल रहा है?',
-    [
-      { label: 'हाँ',  onClick: () => caseNetboxResolved() },
-      { label: 'नहीं', onClick: () => caseNetboxStillDown() }
-    ]
-  );
-}
-
-async function caseNetboxResolved() {
-  addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
-  setNetStatus('चालू है');
-  await wait(700);
-  await showTyping(900);
-  addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं।');
-  await wait(900);
-  addRestartCard();
-}
-
-async function caseNetboxStillDown() {
-  addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
+  addUserMessage('हाँ, चालू है', 'क्या आपका नेट बॉक्स चालू है?');
   await wait(700);
   await showTyping(1400);
   const ticketId = String(Math.floor(600000 + Math.random() * 99999));
@@ -2425,34 +2274,82 @@ async function caseNetboxStillDown() {
   setNetStatus('शिकायत दर्ज हो गई');
   showTicketLine(activeComplaint.engineer, activeComplaint.eta);
   addWiomMessage(
-    buildTicketMessage({ ticketId, problem: 'नेट नहीं चल रहा' }) +
-    `\n\nहम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।`,
+    buildTicketMessage({ ticketId, problem: 'नेट नहीं चल रहा' }),
     { cta: callEngineerCta() }
   );
   await wait(1200);
   addRestartCard();
 }
 
-// Case Wi-Fi · Fresh flow (with correct or wrong Wi-Fi status line)
-async function caseFreshFlow(correctWifi) {
+async function caseNetboxOff() {
+  addUserMessage('नहीं, बंद है', 'क्या आपका नेट बॉक्स चालू है?');
+  await wait(700);
+  await showTyping(1500);
+  addWiomMessage(
+    'समझ गए। पहले ये <b>3 चीजें</b> जल्दी से करके देख लें। कई बार इससे नेट वापस चल जाता है।\n\n' +
+    '<b>1.</b> नेट बॉक्स को चालू करें\n' +
+    '<b>2.</b> बॉक्स की लाइटें स्थिर होने तक रुकें\n' +
+    '<b>3.</b> फिर मोबाइल को सही WiFi से जोड़ें\n' +
+    '<b>Wiom Ramesh 1234</b>\n\n' +
+    'सब हो जाए, फिर नीचे वाला बटन दबाएं।',
+    {
+      media: true,
+      cta: [{ label: 'हो गया, अब चेक करते हैं', onClick: () => caseNetboxRecheck() }]
+    }
+  );
+}
+
+async function caseNetboxRecheck() {
+  addUserMessage('हो गया, अब चेक करते हैं', 'सब हो जाए, फिर नीचे वाला बटन दबाएं।');
+  await wait(700);
+  await showTyping(1100);
+  addWiomWithSideBySide(
+    'क्या अब आपका नेट सही चल रहा है?',
+    [
+      { label: 'हाँ, सही है',  onClick: () => caseNetboxResolved() },
+      { label: 'अभी दिक्कत है', onClick: () => caseNetboxStillDown() }
+    ]
+  );
+}
+
+async function caseNetboxResolved() {
+  addUserMessage('हाँ, सही है', 'क्या अब आपका नेट सही चल रहा है?');
+  setNetStatus('चालू है');
+  await wait(700);
+  await showTyping(900);
+  addWiomMessage('बढ़िया! 🎉 आपका नेट अब सही चल रहा है।\n\nआगे कभी भी कोई दिक्कत हो, तो यहीं चैट में बता दीजिए।\nहम आपकी मदद के लिए हमेशा तैयार हैं।');
+  await wait(900);
+  addRestartCard();
+}
+
+async function caseNetboxStillDown() {
+  addUserMessage('अभी दिक्कत है', 'क्या अब आपका नेट सही चल रहा है?');
+  await wait(700);
+  await showTyping(1400);
+  const ticketId = String(Math.floor(600000 + Math.random() * 99999));
+  activeComplaint = {
+    id: ticketId, problem: 'नेट नहीं चल रहा', engineer: 'रोहित कुमार',
+    eta: '13 दिसं, 5pm तक'
+  };
+  setNetStatus('शिकायत दर्ज हो गई');
+  showTicketLine(activeComplaint.engineer, activeComplaint.eta);
+  addWiomMessage(
+    buildTicketMessage({ ticketId, problem: 'नेट नहीं चल रहा' }),
+    { cta: callEngineerCta() }
+  );
+  await wait(1200);
+  addRestartCard();
+}
+
+// Fresh flow — recharge active, ask issue directly (no status check, no Wi-Fi detection)
+async function caseFreshFlow() {
   setNetStatus('जाँच रहे हैं…');
   seedRechargeHistory();
   await wait(400);
   autoUserBubble();
   await wait(700);
   await showTyping(1300);
-  addStatusCheckMixed([
-    { ok: true, text: 'रिचार्ज एक्टिव — ₹150, 2 दिन बाकी' },
-    correctWifi
-      ? { ok: true,  text: 'Wiom Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं' }
-      : { ok: false, text: 'आप अपने Wi-Fi (Wiom Ramesh 1234) से नहीं जुड़े हैं' }
-  ]);
-  await wait(1000);
-  await showTyping(1000);
-  const intro = correctWifi
-    ? 'हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए — दिक्कत क्या है?'
-    : 'एक बात बताइए — दिक्कत क्या है?';
-  addWiomMessage(intro, {
+  addWiomMessage('हमारी तरफ़ से सब ठीक दिख रहा है। एक बात बताइए, दिक्कत क्या है?', {
     cta: [
       { label: 'नेट नहीं चल रहा',           onClick: () => caseFreshPickIssue('not_working',  'नेट नहीं चल रहा') },
       { label: 'नेट रुक रुक कर चल रहा है', onClick: () => caseFreshPickIssue('intermittent', 'नेट रुक रुक कर चल रहा है') }
@@ -2465,11 +2362,12 @@ async function caseFreshPickIssue(key, label) {
   await wait(700);
   await showTyping(1300);
   addWiomMessage(
-    'समझ गए। पहले ये जल्दी से कर लें — कई बार इन्हीं से नेट चल जाता है:\n\n' +
-    '<b>1.</b> देखें कि आप सही Wi-Fi (Wiom Ramesh 1234) से जुड़े हैं\n' +
-    '<b>2.</b> नेट बॉक्स बंद-चालू करें — तार निकालें, <b>30 सेकंड</b> रुकें, वापस लगाएं\n' +
-    '<b>3.</b> लाइटें स्थिर हों, तो मोबाइल को दोबारा कनेक्ट करें\n\n' +
-    'सब करने के बाद नीचे का बटन दबाएं।',
+    'समझ गए। पहले ये <b>3 चीजें</b> जल्दी से करके देख लें। कई बार इससे नेट वापस चल जाता है।\n\n' +
+    '<b>1.</b> देखें मोबाइल सही WiFi से जुड़ा है\n' +
+    '<b>Wiom Ramesh 1234</b>\n' +
+    '<b>2.</b> नेट बॉक्स को बंद करके <b>30 सेकंड</b> बाद चालू करें\n' +
+    '<b>3.</b> फिर मोबाइल को दोबारा WiFi से कनेक्ट करें\n\n' +
+    'सब हो जाए, फिर नीचे वाला बटन दबाएं।',
     {
       media: true,
       cta: [{ label: 'हो गया, अब चेक करते हैं', onClick: () => caseFreshStepsDone(key, label) }]
@@ -2478,27 +2376,27 @@ async function caseFreshPickIssue(key, label) {
 }
 
 async function caseFreshStepsDone(key, label) {
-  addUserMessage('हो गया, अब चेक करते हैं', 'सब करने के बाद नीचे का बटन दबाएं।');
+  addUserMessage('हो गया, अब चेक करते हैं', 'सब हो जाए, फिर नीचे वाला बटन दबाएं।');
   await wait(700);
   await showTyping(1100);
   addWiomWithSideBySide('क्या अब आपका नेट सही चल रहा है?', [
-    { label: 'हाँ',  onClick: () => caseFreshRecheck(true,  key, label) },
-    { label: 'नहीं', onClick: () => caseFreshRecheck(false, key, label) }
+    { label: 'हाँ, सही है',  onClick: () => caseFreshRecheck(true,  key, label) },
+    { label: 'अभी दिक्कत है', onClick: () => caseFreshRecheck(false, key, label) }
   ]);
 }
 
 async function caseFreshRecheck(isYes, key, label) {
   if (isYes) {
-    addUserMessage('हाँ', 'क्या अब आपका नेट सही चल रहा है?');
+    addUserMessage('हाँ, सही है', 'क्या अब आपका नेट सही चल रहा है?');
     setNetStatus('चालू है');
     await wait(700);
     await showTyping(900);
-    addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं।');
+    addWiomMessage('बढ़िया! 🎉 आपका नेट अब सही चल रहा है।\n\nआगे कभी भी कोई दिक्कत हो, तो यहीं चैट में बता दीजिए।\nहम आपकी मदद के लिए हमेशा तैयार हैं।');
     await wait(900);
     addRestartCard();
     return;
   }
-  addUserMessage('नहीं', 'क्या अब आपका नेट सही चल रहा है?');
+  addUserMessage('अभी दिक्कत है', 'क्या अब आपका नेट सही चल रहा है?');
   await wait(700);
   await showTyping(1300);
   const ticketId = String(Math.floor(600000 + Math.random() * 99999));
@@ -2509,8 +2407,7 @@ async function caseFreshRecheck(isYes, key, label) {
   setNetStatus('शिकायत दर्ज हो गई');
   showTicketLine(activeComplaint.engineer, activeComplaint.eta);
   addWiomMessage(
-    buildTicketMessage({ ticketId, problem: label }) +
-    `\n\nहम आपकी समस्या को जल्द से जल्द सुलझाने का प्रयास कर रहे हैं।`,
+    buildTicketMessage({ ticketId, problem: label }),
     { cta: callEngineerCta() }
   );
   await wait(1200);
@@ -2548,17 +2445,9 @@ const GATES = [
     id: 'D',
     title: 'Gate D · Router Ping Check',
     question: 'क्या <b>नेट बॉक्स तक</b> ping पहुँच रहा है?',
-    desc: 'Ping fail → bot पूछता है "नेट बॉक्स ON है?"। हाँ → service ticket तुरंत। नहीं → on + Wi-Fi connect + recheck → ticket if still down. YES → next gate.',
-    yes: { label: 'YES — ping received', isAdvance: true },
+    desc: 'Ping fail → bot पूछता है "नेट बॉक्स चालू है?"। हाँ → शिकायत तुरंत दर्ज। नहीं → चालू करवाने के steps + recheck → शिकायत if still down. YES → fresh troubleshoot flow.',
+    yes: { label: 'YES — ping received', flow: caseFreshFlow },
     no:  { label: 'NO — ping failed', flow: caseNetboxCheck }
-  },
-  {
-    id: 'WIFI',
-    title: 'Gate · सही Wi-Fi Check',
-    question: 'क्या user <b>सही Wi-Fi</b> से जुड़े हैं?',
-    desc: 'दोनों cases में flow एक जैसा है — सिर्फ status check में Wi-Fi line अलग दिखती है (✅ correct / ❌ wrong)। फिर standard troubleshoot → recheck → शिकायत.',
-    yes: { label: 'YES — correct Wi-Fi', flow: () => caseFreshFlow(true) },
-    no:  { label: 'NO — wrong Wi-Fi',    flow: () => caseFreshFlow(false) }
   }
 ];
 
