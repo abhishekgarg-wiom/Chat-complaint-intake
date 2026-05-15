@@ -1785,7 +1785,7 @@ async function onApiErrorRecheck(isYes) {
     setNetStatus('चालू है');
     await wait(700);
     await showTyping(900);
-    addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं।');
+    addWiomMessage('बढ़िया! 🎉 आपका नेट अब सही चल रहा है।\n\nआगे कभी भी कोई दिक्कत हो, तो यहीं चैट में बता दीजिए।\nहम मदद के लिए हमेशा तैयार हैं।');
     await wait(600);
     addRestartCard();
     return;
@@ -1906,7 +1906,7 @@ async function onRecheck(isYes, key, label) {
 
     await wait(700);
     await showTyping(900);
-    addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं — हम तुरंत मदद करेंगे।');
+    addWiomMessage('बढ़िया! 🎉 आपका नेट अब सही चल रहा है।\n\nआगे कभी भी कोई दिक्कत हो, तो यहीं चैट में बता दीजिए।\nहम मदद के लिए हमेशा तैयार हैं।');
     log('COMPLETED', 'flow ended (self-resolved)', false);
 
     await wait(600);
@@ -2120,7 +2120,7 @@ async function onNetboxResolved() {
   log('COMPLETED', 'netbox flow → self-resolved', false);
   await wait(700);
   await showTyping(900);
-  addWiomMessage('बढ़िया! 🎉\n\nआगे कभी भी कोई दिक्कत हो तो यहीं चैट में बताएं।');
+  addWiomMessage('बढ़िया! 🎉 आपका नेट अब सही चल रहा है।\n\nआगे कभी भी कोई दिक्कत हो, तो यहीं चैट में बता दीजिए।\nहम मदद के लिए हमेशा तैयार हैं।');
   await wait(700);
   addRestartCard();
 }
