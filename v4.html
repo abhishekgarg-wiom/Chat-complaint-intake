@@ -1167,14 +1167,8 @@ body {
       </div>
 
       <div class="scenario-group-label">Others</div>
-      <div class="scenario-card" id="scenario4Card" data-case="resolved_closed">
-        <div class="scenario-card-num">Case 6 · Resolved + closed</div>
-        <div class="scenario-card-title">पिछली शिकायत बंद कर दी थी</div>
-        <div class="scenario-card-desc">पिछली शिकायत हल हुई थी और user ने rating देकर close भी कर दी थी। अब नई दिक्कत आई — flow Case 1 (Happy flow) की तरह fresh शुरू होता है, कोई reopen prompt नहीं।</div>
-      </div>
-
       <div class="scenario-card" id="scenario8Card" data-case="api_error">
-        <div class="scenario-card-num">Case 7 · Step G error</div>
+        <div class="scenario-card-num">Case 6 · Step G error</div>
         <div class="scenario-card-title">शिकायत नहीं बन पाई</div>
         <div class="scenario-card-desc">User troubleshoot कर चुके हैं — चैट recheck पर है। "नहीं" बोलते ही शिकायत system down निकलता है। Bot honestly बताता है: support number पर call करें, समस्या एक बार और बतानी पड़ेगी।</div>
       </div>
@@ -1839,7 +1833,6 @@ async function runReturningActiveFlow() {
 async function onIntentSent() {
   switch (currentScenario) {
     case 'fresh':            return freshAfterIntent();
-    case 'resolved_closed':  return freshAfterIntent();   // closed ticket → fresh flow
     case 'resolved_reopen':  return resolvedReopenAfterIntent();
     case 'ping_fail':        return pingFailAfterIntent();
     case 'inactive_plan':    return inactivePlanAfterIntent();
@@ -2070,19 +2063,17 @@ async function onNetboxOn() {
   const ticketId = String(Math.floor(600000 + Math.random() * 99999));
   activeComplaint = {
     id: ticketId,
-    problem: 'इलाके में नेट बंद है',
+    problem: 'नेट नहीं चल रहा',
     engineer: 'रोहित कुमार',
     eta: '13 दिसं, 5pm तक',
-    status: 'रोहित कुमार आ रहे हैं',
+    status: 'शिकायत दर्ज हो गई',
     stage: 'registered'
   };
-  setNetStatus('रोहित कुमार आ रहे हैं');
+  setNetStatus('शिकायत दर्ज हो गई');
   showTicketLine(activeComplaint.engineer, activeComplaint.eta);
 
   addWiomMessage(
-    buildTicketMessage({
-      ticketId, problem: 'इलाके में नेट बंद है', type: 'SERVICE · 4hr TAT'
-    }),
+    buildTicketMessage({ ticketId, problem: 'नेट नहीं चल रहा' }),
     { cta: callEngineerCta() }
   );
   log('TICKET', `fast-path #${ticketId} — INTERNET SUPPLY DOWN`, true);
@@ -2216,36 +2207,12 @@ async function returningActiveAfterIntent() {
   addRestartCard();
 }
 
-// ============================================================================
-// CASE 2 — Continuity (returning with an active complaint)
-// ============================================================================
-// ============================================================================
-// CASE 2 — Continuity (user-triggered) · open ticket exists, user asks
-// ============================================================================
-// ============================================================================
-// Case 4 (NEW) — Resolved + closed previous ticket → routes to fresh flow
-// ============================================================================
-async function runResolvedClosedFlow() {
-  activeComplaint = null;
-  setNetStatus('चालू है');
-  hideTicketLine();
-
-  seedRechargeHistory();
-  addPrevChatCard('पिछली शिकायत आपने बंद कर दी थी');
-  addWiomMessage(
-    'आपकी पिछली शिकायत <b>#612290</b> हल हुई थी और आपने rating देकर बंद कर दी थी। 🙏\n\nधन्यवाद!'
-  );
-
-  log('entry', 'resolved_closed — fresh flow on intent', false);
-}
-
 // ============ SCENARIO PICKER ============
 
 const SCENARIOS = {
   fresh:            runFreshFlow,
   returning_active: runReturningActiveFlow,
   resolved_reopen:  runResolvedReopenFlow,
-  resolved_closed:  runResolvedClosedFlow,
   ping_fail:        runPingFailFlow,
   inactive_plan:    runInactivePlanFlow,
   api_error:        runApiErrorFlow
@@ -2352,7 +2319,6 @@ contextNextBtn.addEventListener('click', showScenarios);
 document.getElementById('scenario1Card').addEventListener('click', () => pickScenario('fresh'));
 document.getElementById('scenario2Card').addEventListener('click', () => pickScenario('returning_active'));
 document.getElementById('scenario3Card').addEventListener('click', () => pickScenario('resolved_reopen'));
-document.getElementById('scenario4Card').addEventListener('click', () => pickScenario('resolved_closed'));
 document.getElementById('scenario5Card').addEventListener('click', () => pickScenario('ping_fail'));
 document.getElementById('scenario6Card').addEventListener('click', () => pickScenario('inactive_plan'));
 document.getElementById('scenario8Card').addEventListener('click', () => pickScenario('api_error'));
