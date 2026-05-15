@@ -1163,7 +1163,7 @@ body {
       <div class="scenario-card" id="scenario5Card" data-case="ping_fail">
         <div class="scenario-card-num">Case 5 · No ping</div>
         <div class="scenario-card-title">नेट बॉक्स से connection नहीं हो रहा</div>
-        <div class="scenario-card-desc">NAS ping fail — bot सीधे पूछता है "क्या आपका नेट बॉक्स ON है?"। <b>हाँ</b> → service ticket तुरंत (Type 3, 4hr)। <b>नहीं</b> → on करने और सही Wi-Fi से connect होने को कहता है, फिर recheck → ticket if still down.</div>
+        <div class="scenario-card-desc">NAS ping fail — bot सीधे पूछता है "क्या आपका नेट बॉक्स चालू है?"। <b>हाँ</b> → service ticket तुरंत (Type 3, 4hr)। <b>नहीं</b> → चालू करने और सही WiFi से जोड़ने को कहता है, फिर recheck → ticket if still down.</div>
       </div>
 
       <div class="scenario-group-label">Others</div>
@@ -2032,10 +2032,10 @@ async function onReopenDifferentPingFail() {
   await wait(400);
   await showTyping(1300);
   addWiomWithSideBySide(
-    'हम आपके नेट बॉक्स से connect नहीं कर पा रहे हैं। क्या आपका <b>नेट बॉक्स ON</b> है?',
+    'हम आपके नेट बॉक्स से कनेक्ट नहीं कर पा रहे हैं।\nक्या आपका <b>नेट बॉक्स चालू</b> है?',
     [
-      { label: 'हाँ, ON है',  onClick: () => onNetboxOn() },
-      { label: 'नहीं, OFF है', onClick: () => onNetboxOff() }
+      { label: 'हाँ, चालू है',  onClick: () => onNetboxOn() },
+      { label: 'नहीं, बंद है', onClick: () => onNetboxOff() }
     ]
   );
   log('STEP_D', 'awaiting netbox ON/OFF', false);
@@ -2051,17 +2051,17 @@ async function pingFailAfterIntent() {
   await wait(700);
   await showTyping(1500);
   addWiomWithSideBySide(
-    'हम आपके नेट बॉक्स से connect नहीं कर पा रहे हैं। क्या आपका <b>नेट बॉक्स ON</b> है?',
+    'हम आपके नेट बॉक्स से कनेक्ट नहीं कर पा रहे हैं।\nक्या आपका <b>नेट बॉक्स चालू</b> है?',
     [
-      { label: 'हाँ, ON है',  onClick: () => onNetboxOn() },
-      { label: 'नहीं, OFF है', onClick: () => onNetboxOff() }
+      { label: 'हाँ, चालू है',  onClick: () => onNetboxOn() },
+      { label: 'नहीं, बंद है', onClick: () => onNetboxOff() }
     ]
   );
   log('STEP_D', 'awaiting netbox ON/OFF', false);
 }
 
 async function onNetboxOn() {
-  addUserMessage('हाँ, ON है', 'क्या आपका नेट बॉक्स ON है?');
+  addUserMessage('हाँ, चालू है', 'क्या आपका नेट बॉक्स चालू है?');
   log('STEP_D', 'netbox ON → service ticket', true);
 
   await wait(700);
@@ -2093,26 +2093,27 @@ async function onNetboxOn() {
 }
 
 async function onNetboxOff() {
-  addUserMessage('नहीं, OFF है', 'क्या आपका नेट बॉक्स ON है?');
+  addUserMessage('नहीं, बंद है', 'क्या आपका नेट बॉक्स चालू है?');
   log('STEP_D', 'netbox OFF → guide user', false);
 
   await wait(700);
   await showTyping(1500);
   addWiomMessage(
-    'ठीक है — कुछ steps follow करें:\n\n' +
-    '<b>1.</b> अपने <b>नेट बॉक्स को ON</b> करें (तार लगाएं, switch on करें)\n' +
-    '<b>2.</b> लाइटें स्थिर होने तक रुकें\n' +
-    '<b>3.</b> मोबाइल को सही Wi-Fi (<b>Wiom Ramesh 1234</b>) से जोड़ें\n\n' +
-    'सब हो जाए तो नीचे का बटन दबाएं।',
+    'समझ गए। पहले ये <b>3 चीज़ें</b> जल्दी से करके देख लें। कई बार इससे नेट वापस चल जाता है।\n\n' +
+    '<b>1.</b> देखें नेट बॉक्स चालू है\n' +
+    '<b>2.</b> बॉक्स की लाइटें स्थिर होने तक रुकें\n' +
+    '<b>3.</b> फिर मोबाइल को सही WiFi से जोड़ें\n' +
+    '<b>Wiom Ramesh 1234</b>\n\n' +
+    'सब हो जाए, फिर नीचे वाला बटन दबाएं।',
     {
       media: true,
-      cta: [{ label: 'अब check करें', onClick: () => onNetboxRecheck() }]
+      cta: [{ label: 'हो गया, अब चेक करते हैं', onClick: () => onNetboxRecheck() }]
     }
   );
 }
 
 async function onNetboxRecheck() {
-  addUserMessage('अब check करें', 'सब हो जाए तो नीचे का बटन दबाएं।');
+  addUserMessage('हो गया, अब चेक करते हैं', 'सब हो जाए, फिर नीचे वाला बटन दबाएं।');
   await wait(700);
   await showTyping(1100);
   addWiomWithSideBySide(
